@@ -5,6 +5,7 @@ import com.example.jpa.domain.user.dto.LoginRequestDto;
 import com.example.jpa.domain.user.dto.SignupRequestDto;
 import com.example.jpa.domain.user.dto.UserResponseDto;
 import com.example.jpa.domain.user.service.UserService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
@@ -38,9 +39,15 @@ public class UserApiController {
      * 로그인 API
      */
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<UserResponseDto>> login(@RequestBody LoginRequestDto requestDto) {
+    public ResponseEntity<ApiResponse<UserResponseDto>> login(@RequestBody LoginRequestDto requestDto, HttpSession session) {
         try {
             UserResponseDto user = userService.login(requestDto);
+            // 세션에 사용자 정보 저장
+            session.setAttribute("loginUser", user);
+            session.setAttribute("userId", user.getId());
+            session.setAttribute("username", user.getUsername());
+            session.setAttribute("role", user.getRole());
+            log.info("API 로그인 성공 - 세션 저장: {}", user.getUsername());
             return ResponseEntity.ok(ApiResponse.success("로그인 성공", user));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

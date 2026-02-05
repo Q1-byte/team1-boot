@@ -21,7 +21,7 @@ public class Point {
     private Integer id;
 
     @Column(nullable = false)
-    private Integer userId;    // 사용자 ID
+    private Long userId;    // 사용자 ID
 
     @Column(nullable = false)
     private Integer amount;    // 포인트 금액 (양수: 적립, 음수: 사용)

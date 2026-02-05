@@ -15,13 +15,16 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.NoSuchElementException;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 @Service
 @Log4j2
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class UserService {
-    
+
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
     
     /**
      * 회원가입
@@ -43,8 +46,8 @@ public class UserService {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
         
-        // 비밀번호 암호화 (실제로는 BCryptPasswordEncoder 등 사용)
-        String encodedPassword = encodePassword(requestDto.getPassword());
+        // 비밀번호 암호화
+        String encodedPassword = passwordEncoder.encode(requestDto.getPassword());
         
         // 사용자 저장
         User user = requestDto.toEntity(encodedPassword);
@@ -64,8 +67,7 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
         
         // 비밀번호 검증
-        String encodedPassword = encodePassword(requestDto.getPassword());
-        if (!user.getPassword().equals(encodedPassword)) {
+        if (!passwordEncoder.matches(requestDto.getPassword(), user.getPassword())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
         
@@ -123,12 +125,11 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("해당 회원이 존재하지 않습니다."));
         
-        String encodedCurrentPassword = encodePassword(currentPassword);
-        if (!user.getPassword().equals(encodedCurrentPassword)) {
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
             throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
         }
-        
-        user.setPassword(encodePassword(newPassword));
+
+        user.setPassword(passwordEncoder.encode(newPassword));
         log.info("비밀번호 변경 완료: {}", user.getUsername());
     }
     
@@ -144,15 +145,6 @@ public class UserService {
         log.info("회원 탈퇴 완료: {}", user.getUsername());
     }
     
-    /**
-     * 비밀번호 암호화 (간단한 구현 - 실제로는 BCryptPasswordEncoder 사용 권장)
-     */
-    private String encodePassword(String password) {
-        // TODO: 실제 운영 시 BCryptPasswordEncoder로 교체
-        // 현재는 간단히 해시값 사용
-        return String.valueOf(password.hashCode());
-    }
-
     // ==================== 관리자용 메서드 ====================
 
     /**

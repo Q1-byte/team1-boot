@@ -29,6 +29,6 @@ public class PointService {
 
         // 2. 히스토리에 기록 남기기 (아까 만든 log 메서드 활용)
         String logMsg = String.format("%s (금액: %d)", request.getDescription(), request.getAmount());
-        historyService.log("POINT_EVENT", logMsg, request.getUserId());
+        historyService.log("POINT_EVENT", logMsg, request.getUserId().intValue());
     }
 }
