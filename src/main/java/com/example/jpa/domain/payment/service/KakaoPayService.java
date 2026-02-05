@@ -63,15 +63,23 @@ public class KakaoPayService {
                 KakaoPayReadyResponse.class);
 
         if (response != null) {
-            Long currentLoginUserId = 1L; // 실제 구현 시 시큐리티 세션 등에서 가져옴
-            Long currentPlanId = 1L;      // 실제 구현 시 요청 데이터에서 가져옴
+            // 요청 데이터에서 userId, planId 추출 (프론트엔드에서 전달)
+            Long userId = extractLongValue(requestData.get("user_id"));
+            Long planId = extractLongValue(requestData.get("plan_id"));
+
+            if (userId == null) {
+                throw new IllegalArgumentException("user_id는 필수 값입니다.");
+            }
+            if (planId == null) {
+                throw new IllegalArgumentException("plan_id는 필수 값입니다.");
+            }
 
             Payment payment = Payment.builder()
                     .tid(response.getTid())
                     .partnerOrderId(partnerOrderId)
                     .partnerUserId(partnerUserId)
-                    .userId(currentLoginUserId)
-                    .planId(currentPlanId)
+                    .userId(userId)
+                    .planId(planId)
                     .totalAmount(Integer.parseInt(totalAmount))
                     .itemName(itemName)
                     .status("READY")
@@ -125,5 +133,28 @@ public class KakaoPayService {
         }
 
         return "success";
+    }
+
+    /**
+     * Object를 Long으로 변환하는 헬퍼 메서드
+     */
+    private Long extractLongValue(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Long) {
+            return (Long) value;
+        }
+        if (value instanceof Integer) {
+            return ((Integer) value).longValue();
+        }
+        if (value instanceof String) {
+            try {
+                return Long.parseLong((String) value);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+        return null;
     }
 }

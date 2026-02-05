@@ -48,3 +48,6 @@ api:
   public-data:
     url: "https://apis.data.go.kr/B551011/KorService2"
     service-key: ${PUBLIC_DATA_SERVICE_KEY:}
+
+kakao:
+  admin-key: ${KAKAO_ADMIN_KEY:}

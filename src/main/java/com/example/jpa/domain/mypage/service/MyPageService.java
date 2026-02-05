@@ -80,7 +80,7 @@ public class MyPageService {
      * 내 포인트 내역 조회
      */
     public List<PointResponseDto> getMyPoints(Long userId) {
-        return pointRepository.findByUserIdOrderByCreatedAtDesc(userId.intValue())
+        return pointRepository.findByUserIdOrderByCreatedAtDesc(userId)
                 .stream()
                 .map(PointResponseDto::fromEntity)
                 .collect(Collectors.toList());

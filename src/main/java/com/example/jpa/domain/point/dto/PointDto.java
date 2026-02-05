@@ -7,7 +7,7 @@ public class PointDto {
 
     @Getter @Setter
     public static class Request {
-        private Integer userId;
+        private Long userId;
         private Integer amount;
         private String description;
     }
