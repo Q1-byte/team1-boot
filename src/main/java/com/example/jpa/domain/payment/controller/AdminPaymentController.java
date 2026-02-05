@@ -30,7 +30,7 @@ public class AdminPaymentController {
 
     // 결제 강제 취소 (관리자 권한)
     @PatchMapping("/{id}/cancel")
-    public ResponseEntity<String> cancel(@PathVariable Integer id) {
+    public ResponseEntity<String> cancel(@PathVariable Long id) {
         paymentService.cancelPayment(id);
         return ResponseEntity.ok("결제가 취소되었습니다.");
     }

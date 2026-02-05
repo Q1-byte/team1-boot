@@ -31,14 +31,13 @@ public class PaymentService {
 
     // 결제 취소 상태 변경
     @Transactional
-    public void cancelPayment(Integer id) { // 1. 타입을 Integer로 통일
-        // 2. findById 뒤에 반드시 .orElseThrow() 등을 붙여서 실제 객체를 꺼내야 합니다!
+    public void cancelPayment(Long id) {
         Payment payment = paymentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 결제 내역이 없습니다. id=" + id));
 
-        payment.setStatus("CANCELLED");
+        payment.updateStatus("CANCELLED", payment.getPaymentKey());
 
-        // 3. 히스토리 기록 (targetId도 Integer이므로 타입이 딱 맞을 거예요)
-        historyService.log("PAYMENT_CANCEL", "관리자가 결제를 취소함", id);
+        // 히스토리 기록
+        historyService.log("PAYMENT_CANCEL", "관리자가 결제를 취소함", id.intValue());
     }
 }
