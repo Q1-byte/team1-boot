@@ -43,7 +43,13 @@ public class TossPaymentService {
             String method = (String) body.get("method"); // "가상계좌" 인지 확인
 
             Payment payment = paymentRepository.findByPartnerOrderId(request.getOrderId())
-                    .orElseThrow(() -> new IllegalArgumentException("해당 주문을 찾을 수 없습니다."));
+                    .orElseGet(() -> Payment.builder()
+                            .partnerOrderId(request.getOrderId())
+                            .userId(1L) // 임시 유저 ID (실제로는 세션 등에서 가져와야 함)
+                            .planId(1L) // 임시 플랜 ID
+                            .totalAmount(Math.toIntExact(request.getAmount()))
+                            .createdAt(LocalDateTime.now())
+                            .build());
 
             if ("가상계좌".equals(method)) {
                 // 가상계좌는 발급만 된 상태이므로 "WAITING_FOR_DEPOSIT" 상태로 저장

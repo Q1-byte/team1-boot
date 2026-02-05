@@ -4,6 +4,7 @@ import com.example.jpa.domain.payment.dto.KakaoPayReadyResponse;
 import com.example.jpa.domain.payment.entity.Payment;
 import com.example.jpa.domain.payment.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
@@ -21,15 +22,16 @@ import java.util.UUID;
 public class KakaoPayService {
 
     private final PaymentRepository paymentRepository;
-    private final String KAKAO_ADMIN_KEY = "a93cf78c5c79c5fbefab2c183750252b";
+
+    @Value("${kakao.admin-key}")
+    private String KAKAO_ADMIN_KEY;
 
     /**
-     * 1단계: 결제 준비 (Ready)
+     * 결제 준비 (Ready)
      */
     public KakaoPayReadyResponse kakaoPayReady(Map<String, Object> requestData) {
         RestTemplate restTemplate = new RestTemplate();
 
-        // 파라미터 추출 및 기본값 설정
         String partnerOrderId = (String) requestData.getOrDefault("partner_order_id", "ORDER-" + UUID.randomUUID().toString().substring(0, 8));
         String partnerUserId = (String) requestData.getOrDefault("partner_user_id", "user_1234");
         String itemName = (String) requestData.getOrDefault("item_name", "여행 일정 예약");
@@ -48,7 +50,7 @@ public class KakaoPayService {
         params.add("total_amount", totalAmount);
         params.add("tax_free_amount", "0");
 
-        // [중요 수정] 프론트엔드 라우터 경로와 일치시켜야 합니다 (포트 5173 기준)
+        // 프런트엔드 리다이렉트 경로 (tid를 쿼리 파라미터로 붙여주면 승인 시 찾기 편합니다)
         params.add("approval_url", "http://localhost:5173/payment/kakao/success");
         params.add("cancel_url", "http://localhost:5173/payment/cancel");
         params.add("fail_url", "http://localhost:5173/payment/kakao/fail");
@@ -60,14 +62,18 @@ public class KakaoPayService {
                 requestEntity,
                 KakaoPayReadyResponse.class);
 
-        // DB 저장 (READY)
         if (response != null) {
+            Long currentLoginUserId = 1L; // 실제 구현 시 시큐리티 세션 등에서 가져옴
+            Long currentPlanId = 1L;      // 실제 구현 시 요청 데이터에서 가져옴
+
             Payment payment = Payment.builder()
                     .tid(response.getTid())
                     .partnerOrderId(partnerOrderId)
                     .partnerUserId(partnerUserId)
-                    .itemName(itemName)
+                    .userId(currentLoginUserId)
+                    .planId(currentPlanId)
                     .totalAmount(Integer.parseInt(totalAmount))
+                    .itemName(itemName)
                     .status("READY")
                     .createdAt(LocalDateTime.now())
                     .build();
@@ -79,7 +85,7 @@ public class KakaoPayService {
     }
 
     /**
-     * 2단계: 결제 승인 (Approve)
+     * 결제 승인 (Approve)
      */
     @Transactional
     public String kakaoPayApprove(String tid, String pgToken) {
@@ -89,8 +95,9 @@ public class KakaoPayService {
         headers.set("Authorization", "KakaoAK " + KAKAO_ADMIN_KEY);
         headers.set("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
 
+        // 1. DB에서 결제 대기 상태인 데이터 조회
         Payment paymentInfo = paymentRepository.findByTid(tid)
-                .orElseThrow(() -> new IllegalArgumentException("결제 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("결제 정보를 찾을 수 없습니다. TID: " + tid));
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("cid", "TC0ONETIME");
@@ -101,16 +108,22 @@ public class KakaoPayService {
 
         HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(params, headers);
 
-        //
-        String response = restTemplate.postForObject(
+        // 2. 카카오 서버로 최종 승인 요청
+        // 응답을 Map이나 별도 DTO로 받아 결제 수단 등을 추출할 수 있습니다.
+        Map<String, Object> response = restTemplate.postForObject(
                 "https://kapi.kakao.com/v1/payment/approve",
                 requestEntity,
-                String.class);
+                Map.class);
 
-        // 상태 업데이트: Builder 방식보다는 Entity 내부의 update 메서드나 Dirty Checking 추천
-        paymentInfo.updateStatus("COMPLETED", tid); // Payment 엔티티에 메서드 생성 권장
-        paymentRepository.save(paymentInfo);
+        // 3. 결제 상태 업데이트 (Dirty Checking 활용)
+        if (response != null) {
+            // "MONEY" 또는 "CARD" 같은 결제 수단 정보 업데이트
+            String method = (String) response.get("payment_method_type");
+            paymentInfo.updateStatus("COMPLETED", tid);
+            // 만약 엔티티에 paymentMethod 필드를 만드셨다면 set 해주세요.
+            // paymentInfo.setPaymentMethod(method);
+        }
 
-        return response;
+        return "success";
     }
 }
