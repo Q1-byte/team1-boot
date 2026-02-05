@@ -44,3 +44,7 @@ spring:
       hibernate:
         format_sql: true
 
+api:
+  public-data:
+    url: "엔드포인트"
+    service-key: "본인 키(특수문자 섞여있을경우에 디코딩된 키로 넣어주세요!"
