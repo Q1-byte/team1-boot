@@ -38,11 +38,10 @@ public class Payment {
 
     /**
      * 결제 상태 및 키 업데이트 메서드
-     * 아까 인텔리제이에서 빨간 줄이 떴던 부분입니다!
      */
     public void updateStatus(String status, String paymentKey) {
         this.status = status;
         this.paymentKey = paymentKey;
-        this.approvedAt = LocalDateTime.now(); // 승인 시간도 함께 기록하면 좋습니다.
+        this.approvedAt = LocalDateTime.now();
     }
 }
