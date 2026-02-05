@@ -44,9 +44,9 @@ public class InquiryService {
 
         // Entity -> DTO 변환 (빌더 패턴 사용)
         return InquiryDto.builder()
-                .id(inquiry.getWriter().getMemberId())
+                .id(inquiry.getWriter().getId().intValue())
                 .title(inquiry.getTitle())
-                .writerName(inquiry.getWriter().getName()) // 연관관계 활용
+                .writerName(inquiry.getWriter().getUsername())
                 .status(inquiry.getStatus())
                 .regDate(inquiry.getRegDate())
                 .build();

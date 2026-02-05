@@ -1,7 +1,7 @@
 package com.example.jpa.domain.inquiry.entity;
 
 
-import com.example.jpa.domain.user.entity.Member;
+import com.example.jpa.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -20,10 +20,9 @@ public class Inquiry {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 1. writer 하나로 통일합니다. (지연 로딩 추가 권장)
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id")
-    private Member writer;
+    @JoinColumn(name = "user_id")
+    private User writer;
 
     @Column(nullable = false)
     private String title;

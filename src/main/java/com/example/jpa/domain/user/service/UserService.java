@@ -10,6 +10,9 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.NoSuchElementException;
 
 @Service
@@ -148,5 +151,32 @@ public class UserService {
         // TODO: 실제 운영 시 BCryptPasswordEncoder로 교체
         // 현재는 간단히 해시값 사용
         return String.valueOf(password.hashCode());
+    }
+
+    // ==================== 관리자용 메서드 ====================
+
+    /**
+     * 전체 회원 목록 조회 (페이징)
+     */
+    public Page<User> findAll(Pageable pageable) {
+        return userRepository.findAll(pageable);
+    }
+
+    /**
+     * 회원 상태 변경
+     */
+    @Transactional
+    public void updateStatus(Long id, String status) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("해당 회원이 존재하지 않습니다."));
+        user.setStatus(status);
+    }
+
+    /**
+     * 회원 저장 (관리자용)
+     */
+    @Transactional
+    public User save(User user) {
+        return userRepository.save(user);
     }
 }
