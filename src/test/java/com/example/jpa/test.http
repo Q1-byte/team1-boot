@@ -1,0 +1,132 @@
+### 1. 장소(Spot) 등록 테스트
+POST http://localhost:8080/api/admin/spots
+Content-Type: application/json
+
+{
+  "name": "성수동 팝업스토어",
+  "address": "서울시 성동구 성수동",
+  "description": "이번 주말까지만 운영하는 핫플"
+}
+
+### 2. 리뷰(Review) 작성 테스트
+POST http://localhost:8080/api/admin/reviews
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "spotId": 1,
+  "content": "사람이 좀 많긴 한데 사진 찍기 좋아요!",
+  "rating": 5
+}
+
+### 3. 포인트(Point) 지급 테스트
+POST http://localhost:8080/api/admin/points
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "amount": 500,
+  "description": "리뷰 작성 보너스 포인트"
+}
+
+### 4. 히스토리 전체 조회 (만약 컨트롤러를 만드셨다면)
+GET http://localhost:8080/api/admin/histories
+
+###5. 키워드 등록 테스트
+POST http://localhost:8080/api/admin/keywords
+Content-Type: application/json
+
+{
+  "name": "성수맛집"
+}
+
+### 키워드 전체 리스트 조회
+GET http://localhost:8080/api/admin/keywords
+Accept: application/json
+
+### 관리자 활동 히스토리 전체 조회
+GET http://localhost:8080/api/admin/histories
+Accept: application/json
+
+### 문의사항 리스트 조회 (1페이지, 10개씩)
+GET http://localhost:8080/api/admin/inquiries?page=0&size=10
+Accept: application/json
+
+### 문의사항 등록 (주소 순서 주의: /api/admin/inquiries)
+POST http://localhost:8080/api/admin/inquiries
+Content-Type: application/json
+
+{
+  "title": "테스트 문의입니다",
+  "content": "문의 내용 테스트 중입니다.",
+  "status": "WAITING"
+}
+
+### [1-1] 리뷰 등록 (삭제용 임시 데이터)
+POST http://localhost:8080/api/admin/reviews
+Content-Type: application/json
+
+{
+  "content": "삭제 테스트용 리뷰입니다.",
+  "rating": 5,
+  "memberId": 1,
+  "spotId": 10
+}
+
+### [1-2] 리뷰 삭제 (위에서 확인한 id가 5번이라고 가정)
+DELETE http://localhost:8080/api/admin/reviews/5
+
+### [2-1] 회원 등록 (탈퇴 테스트용)
+POST http://localhost:8080/api/admin/members
+Content-Type: application/json
+
+{
+  "name": "탈퇴예정자",
+  "email": "test-user@example.com",
+  "address": "서울시 강남구",
+  "age": 20,
+  "phone": "010-0000-0000"
+}
+
+### [2-2] 회원 탈퇴 처리 (PATCH 방식 사용 예시)
+PATCH http://localhost:8080/api/admin/members/1/status
+Content-Type: application/json
+
+{
+  "status": "WITHDRAWAL"
+}
+
+### [3-1] 키워드 등록
+POST http://localhost:8080/api/admin/keywords
+Content-Type: application/json
+
+{
+  "name": "새로운키워드",
+  "status": "ACTIVE"
+}
+
+### [3-2] 키워드 비활성화 전환 (id가 3번이라고 가정)
+PATCH http://localhost:8080/api/admin/keywords/7/status
+Content-Type: application/json
+
+{
+  "status": "DISABLED"
+}
+
+### [4-1] 문의사항 등록 (답변할 대상)
+POST http://localhost:8080/api/admin/inquiries
+Content-Type: application/json
+
+{
+  "title": "결제가 자꾸 실패해요",
+  "content": "카드 정보를 다 넣었는데 마지막에 에러가 납니다.",
+  "author": "홍길동"
+}
+
+### [4-2] 문의사항 답변 등록 (id가 1번이라고 가정)
+PATCH http://localhost:8080/api/admin/inquiries/1/answer
+Content-Type: application/json
+
+{
+  "comment": "안녕하세요 홍길동님, 결제 모듈 업데이트로 인해 일시적인 장애가 있었습니다. 현재 정상화되었으니 다시 시도 부탁드립니다."
+}

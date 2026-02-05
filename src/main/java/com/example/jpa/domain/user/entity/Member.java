@@ -12,7 +12,7 @@ import lombok.*;
 @Builder
 @ToString
 public class Member {
-
+    private String status = "ACTIVE";
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "member_id")
