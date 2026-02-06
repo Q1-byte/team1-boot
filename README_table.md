@@ -304,21 +304,64 @@ FOREIGN KEY (plan_id) REFERENCES travel_plan(id)
 ) COMMENT '최근 본 계획/다시 보기';
 
 -- =============================================
--- 21. 문의/FAQ 테이블
+-- 21. 문의 테이블 (문의 테이블 등록 시 2번)
 -- =============================================
 CREATE TABLE inquiry (
-id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '문의 고유번호',
-user_id BIGINT COMMENT '회원 FK (비회원 문의 가능)',
-type VARCHAR(20) COMMENT '유형 (문의/FAQ)',
-category VARCHAR(30) COMMENT '카테고리 (결제/여행/기타 등)',
-title VARCHAR(100) COMMENT '제목',
-content TEXT COMMENT '내용',
-answer TEXT COMMENT '답변',
-status VARCHAR(20) DEFAULT 'WAIT' COMMENT '상태 (WAIT/ANSWERED)',
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '문의일시',
-answered_at TIMESTAMP COMMENT '답변일시',
-FOREIGN KEY (user_id) REFERENCES users(id)
-) COMMENT '문의/FAQ';
+id BIGINT PRIMARY KEY AUTO_INCREMENT,
+user_id BIGINT NOT NULL,
+category VARCHAR(30) NOT NULL,
+title VARCHAR(200) NOT NULL,
+content TEXT NOT NULL,
+answer TEXT,
+status ENUM('WAIT','ANSWERED') NOT NULL DEFAULT 'WAIT',
+answered_by BIGINT,
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+answered_at TIMESTAMP,
+deleted_at TIMESTAMP NULL,
+is_deleted BOOLEAN DEFAULT FALSE,
+
+FOREIGN KEY (user_id) REFERENCES users(id),
+FOREIGN KEY (category) REFERENCES inquiry_category(code),
+FOREIGN KEY (answered_by) REFERENCES users(id),
+
+INDEX idx_user_status (user_id, status),
+INDEX idx_created_at (created_at),
+INDEX idx_status (status),
+INDEX idx_category (category),
+INDEX idx_deleted (is_deleted, created_at)
+);
+
+-- =============================================
+-- 21-2. 문의 이미지 테이블 (문의 테이블 등록 시 3번)
+-- =============================================
+CREATE TABLE inquiry_file (
+id BIGINT PRIMARY KEY AUTO_INCREMENT,
+inquiry_id BIGINT NOT NULL,
+original_name VARCHAR(255) NOT NULL,
+stored_name VARCHAR(255) NOT NULL,
+file_path VARCHAR(500) NOT NULL,
+file_size INT UNSIGNED NOT NULL,
+content_type VARCHAR(100) NOT NULL,
+download_count INT UNSIGNED DEFAULT 0,
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+FOREIGN KEY (inquiry_id)
+REFERENCES inquiry(id)
+ON DELETE CASCADE,
+
+INDEX idx_inquiry_id (inquiry_id)
+);
+
+-- =============================================
+-- 21-3. 문의 카테고리 테이블 (문의 테이블 등록 시 1번)
+-- =============================================
+CREATE TABLE inquiry_category (
+code VARCHAR(30) PRIMARY KEY,
+name VARCHAR(50) NOT NULL,
+display_order INT DEFAULT 0,
+is_active BOOLEAN DEFAULT TRUE,
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 -- =============================================
 -- 22. 관리자 규칙 테이블 (자동생성/랜덤/결제 등)

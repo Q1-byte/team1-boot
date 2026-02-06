@@ -1,30 +1,40 @@
 package com.example.jpa.domain.inquiry.entity;
 
-
 import com.example.jpa.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "inquiry")
+@Table(name = "inquiry", indexes = {
+    @Index(name = "idx_user_status", columnList = "user_id, status"),
+    @Index(name = "idx_created_at", columnList = "created_at"),
+    @Index(name = "idx_status", columnList = "status"),
+    @Index(name = "idx_category", columnList = "category"),
+    @Index(name = "idx_deleted", columnList = "is_deleted, created_at")
+})
 public class Inquiry {
 
-    @Id // @Id가 빠져있다면 반드시 추가해야 합니다!
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User writer;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
+    private String category;
+
+    @Column(nullable = false, length = 200)
     private String title;
 
     @Column(nullable = false, columnDefinition = "TEXT")
@@ -33,17 +43,54 @@ public class Inquiry {
     @Column(columnDefinition = "TEXT")
     private String answer;
 
-    @Column(nullable = false) // 초기값 설정을 위해 @Builder.Default 등을 고려해보세요.
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private InquiryStatus status = InquiryStatus.WAIT;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "answered_by")
+    private User answeredBy;
 
     @CreationTimestamp
-    @Column(updatable = false)
-    private LocalDateTime regDate;
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 
-    // 2. 아래에 있던 기존 'private Member member' 부분은 통째로 삭제하세요!
+    @Column(name = "answered_at")
+    private LocalDateTime answeredAt;
 
-    public void updateAnswer(String answer) {
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(name = "is_deleted")
+    @Builder.Default
+    private Boolean isDeleted = false;
+
+    @Column(name = "is_secret")
+    @Builder.Default
+    private Boolean isSecret = false;
+
+    @OneToMany(mappedBy = "inquiry", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<InquiryFile> files = new ArrayList<>();
+
+    // 답변 등록
+    public void updateAnswer(String answer, User admin) {
         this.answer = answer;
-        this.status = "COMPLETED";
+        this.answeredBy = admin;
+        this.answeredAt = LocalDateTime.now();
+        this.status = InquiryStatus.ANSWERED;
+    }
+
+    // 소프트 삭제
+    public void softDelete() {
+        this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    // 파일 추가
+    public void addFile(InquiryFile file) {
+        this.files.add(file);
+        file.setInquiry(this);
     }
 }
