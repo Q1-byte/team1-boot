@@ -65,6 +65,11 @@ public class ApiResponse<T> {
                 .build();
     }
     
+    // 기본 에러 응답 (400)
+    public static <T> ApiResponse<T> error(String message) {
+        return error(HttpStatus.BAD_REQUEST, message);
+    }
+
     // 400 Bad Request
     public static <T> ApiResponse<T> badRequest(String message) {
         return error(HttpStatus.BAD_REQUEST, message);

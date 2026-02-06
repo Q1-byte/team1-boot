@@ -1,8 +1,13 @@
 package com.example.jpa.domain.inquiry.service;
 
-import com.example.jpa.domain.inquiry.dto.InquiryDto;
+import com.example.jpa.domain.inquiry.dto.*;
 import com.example.jpa.domain.inquiry.entity.Inquiry;
+import com.example.jpa.domain.inquiry.entity.InquiryCategory;
+import com.example.jpa.domain.inquiry.entity.InquiryStatus;
+import com.example.jpa.domain.inquiry.repository.InquiryCategoryRepository;
 import com.example.jpa.domain.inquiry.repository.InquiryRepository;
+import com.example.jpa.domain.user.entity.User;
+import com.example.jpa.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
@@ -12,73 +17,132 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 @Service
 @Log4j2
 @RequiredArgsConstructor
-@Transactional(readOnly = true) // 기본적으로 읽기 전용으로 설정하여 성능 최적화
+@Transactional(readOnly = true)
 public class InquiryService {
 
     private final InquiryRepository inquiryRepository;
+    private final InquiryCategoryRepository categoryRepository;
+    private final UserRepository userRepository;
 
-    // 문의 등록 (사용자용)
+    // ==================== 사용자용 ====================
+
+    // 문의 등록
     @Transactional
-    public void insert(Inquiry inquiry) {
-        inquiryRepository.save(inquiry);
-    }
+    public InquiryDto createInquiry(Long userId, InquiryCreateRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("사용자를 찾을 수 없습니다."));
 
-    // 문의 삭제 (관리자 또는 본인용)
-    @Transactional
-    public void delete(int id) {
-        inquiryRepository.deleteById(id);
-    }
-
-    // 단건 조회
-    public InquiryDto findById(int id) {
-        Inquiry inquiry = inquiryRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("내역 없음"));
-
-// 2. 만약 DTO로 반환해야 한다면 변환 로직 추가
-        InquiryDto response = new InquiryDto();
-        response.setTitle(inquiry.getTitle()); // 이런 식으로 하나씩 옮겨 담기
-
-        // Entity -> DTO 변환 (빌더 패턴 사용)
-        return InquiryDto.builder()
-                .id(inquiry.getWriter().getId().intValue())
-                .title(inquiry.getTitle())
-                .writerName(inquiry.getWriter().getUsername())
-                .status(inquiry.getStatus())
-                .regDate(inquiry.getRegDate())
+        Inquiry inquiry = Inquiry.builder()
+                .writer(user)
+                .category(request.getCategory())
+                .title(request.getTitle())
+                .content(request.getContent())
+                .isSecret(request.getIsSecret())
                 .build();
 
+        Inquiry saved = inquiryRepository.save(inquiry);
+        log.info("문의 등록 완료 - ID: {}, 작성자: {}", saved.getId(), user.getUsername());
+
+        return InquiryDto.fromEntity(saved);
     }
 
-    // 전체 리스트 조회 (관리자용)
-    public List<Inquiry> findByAll() {
-        return inquiryRepository.findAll();
+    // 내 문의 목록 조회
+    public Page<InquiryDto> getMyInquiries(Long userId, Pageable pageable) {
+        return inquiryRepository.findByWriterIdAndIsDeletedFalseOrderByCreatedAtDesc(userId, pageable)
+                .map(InquiryDto::fromEntityForList);
     }
 
-    // 페이징 처리된 리스트 조회 (관리자 페이지용)
-    public Page<Inquiry> findByAll(Pageable pageable) {
-        log.info("Inquiry List Paging: " + pageable);
-        return inquiryRepository.findAll(pageable);
+    // 문의 상세 조회 (권한 체크 포함)
+    public InquiryDto getInquiry(Long inquiryId, Long userId, boolean isAdmin) {
+        Inquiry inquiry = inquiryRepository.findByIdAndIsDeletedFalse(inquiryId)
+                .orElseThrow(() -> new NoSuchElementException("문의를 찾을 수 없습니다."));
+
+        // 비밀글인 경우 본인 또는 관리자만 조회 가능
+        if (inquiry.getIsSecret() && !isAdmin && !inquiry.getWriter().getId().equals(userId)) {
+            throw new IllegalStateException("접근 권한이 없습니다.");
+        }
+
+        return InquiryDto.fromEntity(inquiry);
     }
 
-    /**
-     * 핵심 로직: 관리자 답변 등록 및 상태 변경
-     */
+    // 문의 삭제 (사용자용 - 답변 전만 가능)
     @Transactional
-    public void answerInquiry(int id, String comment) {
-        log.info("Answering Inquiry ID: " + id);
+    public void deleteInquiry(Long inquiryId, Long userId) {
+        Inquiry inquiry = inquiryRepository.findByIdAndWriterIdAndIsDeletedFalse(inquiryId, userId)
+                .orElseThrow(() -> new NoSuchElementException("문의를 찾을 수 없습니다."));
 
-        // 1. 해당 문의글을 찾는다
-        Inquiry inquiry = inquiryRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("답변할 문의글이 없습니다."));
+        if (inquiry.getStatus() == InquiryStatus.ANSWERED) {
+            throw new IllegalStateException("답변이 완료된 문의는 삭제할 수 없습니다.");
+        }
 
-        // 2. 답변을 등록하고 상태를 바꾼다 (엔티티 내부 메서드 활용)
-        inquiry.updateAnswer(comment);
+        inquiry.softDelete();
+        log.info("문의 삭제 완료 - ID: {}", inquiryId);
+    }
 
-        // @Transactional이 붙어있으므로 save()를 명시적으로 부르지 않아도
-        // 메서드가 끝날 때 DB에 변경사항이 자동 저장됩니다. (더티 체킹)
+    // 카테고리 목록 조회
+    public List<InquiryCategoryDto> getCategories() {
+        return categoryRepository.findByIsActiveTrueOrderByDisplayOrderAsc()
+                .stream()
+                .map(InquiryCategoryDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    // ==================== 관리자용 ====================
+
+    // 전체 문의 목록 조회
+    public Page<InquiryDto> getAllInquiries(Pageable pageable) {
+        return inquiryRepository.findByIsDeletedFalseOrderByCreatedAtDesc(pageable)
+                .map(InquiryDto::fromEntityForList);
+    }
+
+    // 상태별 문의 목록 조회
+    public Page<InquiryDto> getInquiriesByStatus(InquiryStatus status, Pageable pageable) {
+        return inquiryRepository.findByStatusAndIsDeletedFalseOrderByCreatedAtDesc(status, pageable)
+                .map(InquiryDto::fromEntityForList);
+    }
+
+    // 문의 상세 조회 (관리자용 - 권한 체크 없음)
+    public InquiryDto getInquiryForAdmin(Long inquiryId) {
+        Inquiry inquiry = inquiryRepository.findByIdAndIsDeletedFalse(inquiryId)
+                .orElseThrow(() -> new NoSuchElementException("문의를 찾을 수 없습니다."));
+        return InquiryDto.fromEntity(inquiry);
+    }
+
+    // 답변 등록
+    @Transactional
+    public void answerInquiry(Long inquiryId, Long adminId, InquiryAnswerRequest request) {
+        Inquiry inquiry = inquiryRepository.findByIdAndIsDeletedFalse(inquiryId)
+                .orElseThrow(() -> new NoSuchElementException("문의를 찾을 수 없습니다."));
+
+        User admin = userRepository.findById(adminId)
+                .orElseThrow(() -> new NoSuchElementException("관리자를 찾을 수 없습니다."));
+
+        inquiry.updateAnswer(request.getAnswer(), admin);
+        log.info("문의 답변 완료 - ID: {}, 답변자: {}", inquiryId, admin.getUsername());
+    }
+
+    // 문의 삭제 (관리자용)
+    @Transactional
+    public void deleteInquiryByAdmin(Long inquiryId) {
+        Inquiry inquiry = inquiryRepository.findByIdAndIsDeletedFalse(inquiryId)
+                .orElseThrow(() -> new NoSuchElementException("문의를 찾을 수 없습니다."));
+        inquiry.softDelete();
+        log.info("관리자 문의 삭제 - ID: {}", inquiryId);
+    }
+
+    // 답변 대기 문의 수
+    public long getWaitingCount() {
+        return inquiryRepository.countByStatusAndIsDeletedFalse(InquiryStatus.WAIT);
+    }
+
+    // 검색
+    public Page<InquiryDto> searchInquiries(String keyword, Pageable pageable) {
+        return inquiryRepository.searchByKeyword(keyword, pageable)
+                .map(InquiryDto::fromEntityForList);
     }
 }
