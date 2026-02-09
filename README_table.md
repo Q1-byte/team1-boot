@@ -172,47 +172,76 @@ FOREIGN KEY (plan_id) REFERENCES travel_plan(id)
 -- =============================================
 -- 12. 후기 테이블
 -- =============================================
+-- 1. 리뷰 테이블
 CREATE TABLE review (
-id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '후기 고유번호',
-user_id BIGINT NOT NULL COMMENT '회원 FK',
-plan_id BIGINT NOT NULL COMMENT '계획 FK',
-content TEXT NOT NULL COMMENT '후기 내용',
-rating INT CHECK (rating BETWEEN 1 AND 5) COMMENT '평점 (1~5)',
-difficulty_score INT CHECK (difficulty_score BETWEEN 1 AND 5) COMMENT '난이도 체감 점수 (1~5)',
-is_random BOOLEAN DEFAULT FALSE COMMENT '랜덤 여행 후기 여부',
-is_public BOOLEAN DEFAULT TRUE COMMENT '공개 여부',
+id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '리뷰 고유 번호',
+title VARCHAR(255) COMMENT '리뷰 제목',
+content TEXT NOT NULL COMMENT '리뷰 본문 (블로그 형식)',
+user_id BIGINT NOT NULL COMMENT '작성자 ID (FK)',
+plan_id BIGINT COMMENT '여행 일정 ID',
+rating INT COMMENT '평점',
+is_random TINYINT(1) DEFAULT 0 COMMENT '랜덤 여부',
+is_public TINYINT(1) DEFAULT 1 COMMENT '공개 여부',
+is_deleted TINYINT(1) DEFAULT 0 COMMENT '삭제 여부 (Soft Delete)',
 view_count INT DEFAULT 0 COMMENT '조회수',
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '작성일시',
-FOREIGN KEY (user_id) REFERENCES users(id),
-FOREIGN KEY (plan_id) REFERENCES travel_plan(id)
-) COMMENT '여행 후기';
+created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '생성 일시', -- DEFAULT 추가
+updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '수정 일시', -- 자동 업데이트 추가
+
+    INDEX idx_review_created_at (created_at),
+    INDEX idx_review_view_count (view_count),
+
+    CONSTRAINT fk_review_user FOREIGN KEY (user_id) REFERENCES users(id) -- users 확인
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================
 -- 13. 후기 이미지 테이블
 -- =============================================
+-- 2. 리뷰 이미지
 CREATE TABLE review_image (
-id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '이미지 고유번호',
-review_id BIGINT NOT NULL COMMENT '후기 FK',
-file_name VARCHAR(200) NOT NULL COMMENT '파일명',
-url VARCHAR(300) NOT NULL COMMENT '이미지 URL',
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '등록일시',
-FOREIGN KEY (review_id) REFERENCES review(id) ON DELETE CASCADE
-) COMMENT '후기 이미지';
+id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '이미지 고유 번호',
+review_id BIGINT COMMENT '리뷰 ID (FK)',
+origin_name VARCHAR(255) COMMENT '원본 파일명',
+stored_url VARCHAR(255) COMMENT '서버/S3 저장 경로 (URL)',
+sort_order INT COMMENT '이미지 정렬 순서',
+created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '등록 일시',
+
+    CONSTRAINT fk_image_review FOREIGN KEY (review_id) REFERENCES review(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================
 -- 14. 후기 신고 테이블
 -- =============================================
+-- 3. 리뷰 신고
 CREATE TABLE review_report (
-id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '신고 고유번호',
-review_id BIGINT NOT NULL COMMENT '후기 FK',
-reporter_id BIGINT NOT NULL COMMENT '신고자 FK',
-reason VARCHAR(200) COMMENT '신고 사유',
-status VARCHAR(20) DEFAULT 'WAIT' COMMENT '처리 상태 (WAIT/PROCESSED/REJECTED)',
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '신고일시',
-processed_at TIMESTAMP COMMENT '처리일시',
-FOREIGN KEY (review_id) REFERENCES review(id),
-FOREIGN KEY (reporter_id) REFERENCES users(id)
-) COMMENT '후기 신고';
+id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '신고 고유 번호',
+review_id BIGINT NOT NULL COMMENT '신고 대상 리뷰 ID (FK)',
+user_id BIGINT NOT NULL COMMENT '신고한 사람 ID (FK)',
+category VARCHAR(255) COMMENT '신고 카테고리',
+reason TEXT NOT NULL COMMENT '상세 신고 사유',
+status VARCHAR(50) DEFAULT 'PENDING' COMMENT '처리 상태',
+created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '신고 일시',
+processed_at DATETIME COMMENT '처리 완료 일시',
+
+    CONSTRAINT fk_report_review FOREIGN KEY (review_id) REFERENCES review(id),
+    CONSTRAINT fk_report_user FOREIGN KEY (user_id) REFERENCES users(id) -- users 확인
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 4. 리뷰 댓글
+CREATE TABLE review_comment (
+id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '댓글 고유 번호',
+review_id BIGINT COMMENT '리뷰 ID (FK)',
+user_id BIGINT COMMENT '작성자 ID (FK)',
+parent_id BIGINT COMMENT '부모 댓글 ID (대댓글용)',
+content TEXT NOT NULL COMMENT '댓글 내용',
+is_deleted TINYINT(1) DEFAULT 0 COMMENT '삭제 여부',
+is_secret TINYINT(1) DEFAULT 0 COMMENT '비밀글 여부',
+created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '작성 일시',
+update_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '수정 일시', -- 필드명 update_at 유지
+
+    CONSTRAINT fk_comment_review FOREIGN KEY (review_id) REFERENCES review(id) ON DELETE CASCADE, -- CASCADE 권장
+    CONSTRAINT fk_comment_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_comment_parent FOREIGN KEY (parent_id) REFERENCES review_comment(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================
 -- 15. 이벤트/축제 테이블

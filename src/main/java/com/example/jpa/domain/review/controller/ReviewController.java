@@ -2,6 +2,7 @@ package com.example.jpa.domain.review.controller;
 
 import com.example.jpa.domain.review.dto.ReviewResponseDto;
 import com.example.jpa.domain.review.dto.ReviewSaveRequestDto;
+import com.example.jpa.domain.review.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

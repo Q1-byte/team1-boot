@@ -97,6 +97,7 @@ public class ReviewService {
     }
 
     // [2] 리뷰 상세 조회
+    @Transactional
     public ReviewResponseDto getReviewDetail(Long reviewId) {
 
         // 1. 리뷰 엔티티 조회
@@ -215,6 +216,56 @@ public class ReviewService {
     }
 
     /**
+     * [Admin] 전체 리뷰 목록 조회 (삭제된 리뷰 포함)
+     */
+    public Page<ReviewResponseDto> getAdminReviewList(Pageable pageable) {
+        Page<Review> reviews = reviewRepository.findAll(pageable);
+
+        return reviews.map(review -> {
+            String thumbnail = reviewImageRepository.findAllByReviewIdOrderBySortOrderAsc(review.getId())
+                    .stream()
+                    .findFirst()
+                    .map(ReviewImage::getStoredUrl)
+                    .orElse(null);
+
+            return ReviewResponseDto.builder()
+                    .id(review.getId())
+                    .title(review.getTitle())
+                    .content(review.getContent())
+                    .userId(review.getUser().getId())
+                    .authorAccountId(review.getUser().getUsername())
+                    .rating(review.getRating())
+                    .viewCount(review.getViewCount())
+                    .isPublic(review.getIsPublic())
+                    .isDeleted(review.getIsDeleted())
+                    .thumbnailUrl(thumbnail)
+                    .createdAt(review.getCreatedAt())
+                    .updatedAt(review.getUpdatedAt())
+                    .build();
+        });
+    }
+
+    /**
+     * [Admin] 공개/비공개 토글
+     */
+    @Transactional
+    public void toggleReviewVisibility(Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 리뷰가 존재하지 않습니다. ID: " + reviewId));
+        review.setIsPublic(!review.getIsPublic());
+    }
+
+    /**
+     * [Admin] 강제 삭제 (작성자 체크 없음)
+     */
+    @Transactional
+    public void adminDeleteReview(Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 리뷰가 존재하지 않습니다. ID: " + reviewId));
+        review.delete();
+    }
+
+    /**
      * [도움 메서드] 평면 리스트를 트리 구조(계층형)로 변환
      */
     private List<CommentResponseDto> convertToTreeStructure(List<ReviewComment> comments) {
@@ -230,6 +281,7 @@ public class ReviewService {
                     .content(c.getContent())
                     .parentId(c.getParent() != null ? c.getParent().getId() : null)
                     .isSecret(c.getIsSecret())
+                    .isDeleted(c.getIsDeleted())
                     .createdAt(c.getCreatedAt())
                     .build();
             map.put(dto.getId(), dto);
