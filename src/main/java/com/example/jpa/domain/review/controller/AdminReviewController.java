@@ -1,7 +1,5 @@
 package com.example.jpa.domain.review.controller;
 
-import com.example.jpa.domain.review.dto.ReviewDto;
-import com.example.jpa.domain.review.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
