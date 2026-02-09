@@ -1,7 +1,6 @@
 package com.example.jpa.controller;
 
 import com.example.jpa.domain.payment.repository.PaymentRepository;
-import com.example.jpa.domain.review.repository.ReviewRepository;
 import com.example.jpa.domain.spot.repository.SpotRepository;
 import com.example.jpa.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
