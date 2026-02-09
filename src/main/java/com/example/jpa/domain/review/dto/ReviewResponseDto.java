@@ -30,4 +30,8 @@ public class ReviewResponseDto {
     // ReviewResponseDto.java에 추가
     private List<CommentResponseDto> comments;
 
+    // admin용 필드
+    private Boolean isPublic;
+    private Boolean isDeleted;
+
 }

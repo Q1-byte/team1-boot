@@ -17,7 +17,9 @@ public class ReportResponseDto {
     private Long id;
     private Long reviewId;
     private String reporterAccountId; // [추가] 신고자 로그인 아이디
+    private String category;
     private String reason;
     private ReportStatus status;
     private LocalDateTime createdAt;
+    private LocalDateTime processedAt;
 }
