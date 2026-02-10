@@ -63,7 +63,7 @@ public class InquiryService {
                 .orElseThrow(() -> new NoSuchElementException("문의를 찾을 수 없습니다."));
 
         // 비밀글인 경우 본인 또는 관리자만 조회 가능
-        if (inquiry.getIsSecret() && !isAdmin && !inquiry.getWriter().getId().equals(userId)) {
+        if (Boolean.TRUE.equals(inquiry.getIsSecret()) && !isAdmin && !inquiry.getWriter().getId().equals(userId)) {
             throw new IllegalStateException("접근 권한이 없습니다.");
         }
 
