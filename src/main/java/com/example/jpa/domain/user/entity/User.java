@@ -45,6 +45,9 @@ public class User {
     private String keywordPref;
 
     @Builder.Default
+    private Integer age = 0;
+
+    @Builder.Default
     private Integer point = 0;
 
     @CreationTimestamp

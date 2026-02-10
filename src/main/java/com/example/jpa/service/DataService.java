@@ -72,7 +72,8 @@ public class DataService {
                         .queryParam("MobileOS", "ETC")
                         .queryParam("MobileApp", "AppTest")
                         .queryParam("_type", "json")
-                        .queryParam("arrange", "A");
+                        .queryParam("arrange", "A")
+                        .queryParam("firstImageYN", "Y");;
 
                 // 시군구 코드가 있는 경우만 파라미터 추가
                 if (!region.sigunguCode.isEmpty()) {

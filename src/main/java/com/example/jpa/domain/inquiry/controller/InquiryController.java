@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/inquiries")
@@ -62,6 +63,8 @@ public class InquiryController {
         try {
             InquiryDto inquiry = inquiryService.getInquiry(id, userId, isAdmin);
             return ResponseEntity.ok(ApiResponse.success(inquiry));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(404).body(ApiResponse.notFound(e.getMessage()));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(403).body(ApiResponse.error(e.getMessage()));
         }
@@ -96,6 +99,8 @@ public class InquiryController {
         try {
             inquiryService.deleteInquiry(id, userId);
             return ResponseEntity.ok(ApiResponse.success(Map.of("message", "문의가 삭제되었습니다.")));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(404).body(ApiResponse.notFound(e.getMessage()));
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
