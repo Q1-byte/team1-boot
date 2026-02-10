@@ -17,27 +17,39 @@ import java.time.LocalDateTime;
 @Builder
 public class Spot {
 
-    @Column // 소수점이 길어서 정밀도를 높여주는 게 좋습니다
-    private Double latitude;
-
-    @Column
-    private Double longitude;
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // 1. API 중복 체크를 위한 고유 ID (TourAPI의 contentid)
+    @Column(unique = true, nullable = false)
+    private String apiId;
+
     @Column(nullable = false)
     private String name;
+
     private String description;
 
+    // 2. 이미지 주소를 저장할 필드 추가
+    @Column(length = 500) // URL은 길어질 수 있으니 여유 있게 설정
+    private String imageUrl;
+
     @Column(name = "region_id")
-    private Long regionId; // 우선 단순 ID로 매핑
+    private Long regionId;
+
     private String address;
     private String category;
 
+    // 정밀도 높은 좌표 관리 (아주 좋습니다!)
+    private Double latitude;
+    private Double longitude;
+
     @Column(name = "avg_price")
     private Integer avgPrice;
+
+    @Column(name = "is_active")
+    @Builder.Default
+    private Boolean isActive = true;
 
     @CreationTimestamp
     @Column(name = "created_at")

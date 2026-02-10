@@ -42,17 +42,20 @@ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '등록일시'
 -- =============================================
 CREATE TABLE travel_spot (
 id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '여행지 고유번호',
+api_id VARCHAR(50) UNIQUE COMMENT '외부 API 제공 ID (중복 저장 방지용)',
 name VARCHAR(100) NOT NULL COMMENT '여행지명',
 region_id BIGINT COMMENT '지역 FK',
-address VARCHAR(200) COMMENT '주소',
+address VARCHAR(255) COMMENT '주소', -- 200보다는 255가 조금 더 여유롭습니다.
 latitude DECIMAL(10, 7) COMMENT '위도',
-longitude DECIMAL(10, 7) COMMENT '경도',
-category VARCHAR(50) COMMENT '카테고리 (맛집/관광/숙소/액티비티 등)',
+longitude DECIMAL(11, 7) COMMENT '경도', -- 경도는 180도까지 가므로 11자리가 더 안전합니다.
+image_url TEXT COMMENT '이미지 URL', -- 길이가 긴 URL 대비 TEXT 권장
+category VARCHAR(50) COMMENT '카테고리 (맛집/관광 등)',
 description TEXT COMMENT '설명',
-avg_price INT COMMENT '평균 비용',
-avg_time INT COMMENT '평균 소요 시간(분)',
+avg_price INT UNSIGNED DEFAULT 0 COMMENT '평균 비용',
+avg_time INT UNSIGNED DEFAULT 0 COMMENT '평균 소요 시간(분)',
 is_active BOOLEAN DEFAULT TRUE COMMENT '활성화 여부',
 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '등록일시',
+updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일시',
 FOREIGN KEY (region_id) REFERENCES region(id)
 ) COMMENT '여행지(장소) 정보';
 
@@ -62,9 +65,12 @@ FOREIGN KEY (region_id) REFERENCES region(id)
 CREATE TABLE spot_image (
 id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '이미지 고유번호',
 spot_id BIGINT NOT NULL COMMENT '여행지 FK',
-file_name VARCHAR(200) NOT NULL COMMENT '파일명',
-url VARCHAR(300) NOT NULL COMMENT '이미지 URL',
+file_name VARCHAR(255) COMMENT '파일명 (서버 저장용)',
+url TEXT NOT NULL COMMENT '이미지 URL',
+-- 추가된 부분: TourAPI의 cpyrhtDivCd(저작권 유형) 값을 저장
+cpyrht_type VARCHAR(50) COMMENT '저작권 유형 (예: Type1, Type3)',
 is_thumbnail BOOLEAN DEFAULT FALSE COMMENT '썸네일 여부',
+sort_order INT DEFAULT 0 COMMENT '출력 순서',
 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '등록일시',
 FOREIGN KEY (spot_id) REFERENCES travel_spot(id) ON DELETE CASCADE
 ) COMMENT '여행지 이미지';
@@ -126,20 +132,22 @@ FOREIGN KEY (event_id) REFERENCES event(id)
 -- =============================================
 -- 9. 여행 일정 상세 테이블
 -- =============================================
-CREATE TABLE plan_detail (
-id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '상세 고유번호',
-plan_id BIGINT NOT NULL COMMENT '계획 FK',
-spot_id BIGINT COMMENT '방문 장소 FK',
-checklist_id BIGINT COMMENT '체크리스트 항목 FK',
-day INT COMMENT '일차 (1일차, 2일차...)',
-order_num INT COMMENT '일정 순서',
-price INT COMMENT '예상 비용',
-start_time TIME COMMENT '시작 시간',
-end_time TIME COMMENT '종료 시간',
-is_selected BOOLEAN DEFAULT TRUE COMMENT '결제 포함 여부',
-FOREIGN KEY (plan_id) REFERENCES travel_plan(id) ON DELETE CASCADE,
-FOREIGN KEY (spot_id) REFERENCES travel_spot(id),
-FOREIGN KEY (checklist_id) REFERENCES checklist(id)
+CREATE TABLE plan_detail (        
+id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '상세 고유번호',        
+plan_id BIGINT NOT NULL COMMENT '계획 FK',        
+spot_id BIGINT COMMENT '방문 장소 FK',        
+checklist_id BIGINT COMMENT '체크리스트 항목 FK',        
+day INT UNSIGNED NOT NULL DEFAULT 1 COMMENT '일차 (1일차, 2일차...)',        
+order_num INT UNSIGNED NOT NULL COMMENT '일정 순서',        
+price INT UNSIGNED DEFAULT 0 COMMENT '예상 비용',        
+start_time TIME COMMENT '시작 시간',        
+end_time TIME COMMENT '종료 시간',        
+is_selected BOOLEAN DEFAULT TRUE COMMENT '결제 포함 여부',        
+-- 부모 플랜이 삭제되면 상세 일정도 삭제
+FOREIGN KEY (plan_id) REFERENCES travel_plan(id) ON DELETE CASCADE,     
+-- 여행지가 삭제되면 일정 내 장소 정보만 NULL로 변경 (에러 방지 치트키)
+FOREIGN KEY (spot_id) REFERENCES travel_spot(id) ON DELETE SET NULL,     
+FOREIGN KEY (checklist_id) REFERENCES checklist(id) ON DELETE SET NULL
 ) COMMENT '여행 일정 상세';
 
 -- =============================================
