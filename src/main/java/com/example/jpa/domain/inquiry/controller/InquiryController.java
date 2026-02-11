@@ -23,7 +23,6 @@ import java.util.NoSuchElementException;
 @RequestMapping("/api/inquiries")
 @RequiredArgsConstructor
 @Log4j2
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 public class InquiryController {
 
     private final InquiryService inquiryService;

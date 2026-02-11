@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/reports")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173") // 리액트(Vite) 포트 허용 (Config 파일이 없을 경우 대비)
 public class ReviewReportController {
 
     private final ReviewReportService reviewReportService;

@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/events")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*") // [보강] 프론트엔드 연동 시 CORS 에러 방지 필수
 public class EventController {
 
     private final EventService eventService;

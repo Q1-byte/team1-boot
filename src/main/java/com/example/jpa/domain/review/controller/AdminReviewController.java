@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/admin/reviews")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
 public class AdminReviewController {
 
     private final ReviewService reviewService;
