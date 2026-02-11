@@ -7,10 +7,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
-@RestController // @Controller + @ResponseBody 합친 것과 같습니다.
+@RestController
 @RequiredArgsConstructor
 @RequestMapping("/payment")
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true") // 리액트(5173번 포트)와의 통신을 허용합니다.
 public class PaymentController {
 
     private final KakaoPayService kakaoPayService;

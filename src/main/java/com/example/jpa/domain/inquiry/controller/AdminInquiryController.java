@@ -21,7 +21,6 @@ import java.util.Map;
 @RequestMapping("/api/admin/inquiries")
 @RequiredArgsConstructor
 @Log4j2
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 public class AdminInquiryController {
 
     private final InquiryService inquiryService;

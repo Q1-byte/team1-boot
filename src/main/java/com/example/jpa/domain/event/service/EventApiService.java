@@ -30,7 +30,7 @@ public class EventApiService {
     @Value("${api.public-data.service-key}")
     private String serviceKey;
 
-    @PostConstruct
+    // @PostConstruct  // 외부 API 자동 호출 비활성화 (목업 데이터 사용)
     public void init() {
         log.info("Log4j2 - [1. 진입] @PostConstruct 실행");
         fetchAndSaveEvents();
