@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter @Setter
@@ -16,7 +18,12 @@ public class Plan {
 
     private String name;    // 플랜명
     private Integer price;  // 가격
+    private String region;
     private String description; // 설명
+
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "plan_id")
+    private List<TravelSpot> selectedSpots = new ArrayList<>();
 
     @Column(updatable = false)
     private LocalDateTime createdAt;

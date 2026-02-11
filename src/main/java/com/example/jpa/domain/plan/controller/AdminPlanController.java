@@ -6,7 +6,6 @@ import com.example.jpa.domain.plan.service.PlanService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
@@ -27,13 +26,10 @@ public class AdminPlanController {
 
     @PostMapping
     public ResponseEntity<Long> create(@RequestBody PlanDto.Request request) {
-
         Plan plan = new Plan();
-
         plan.setName(request.getName());
         plan.setPrice(request.getPrice());
         plan.setDescription(request.getDescription());
-
         return ResponseEntity.ok(planService.savePlan(plan));
     }
 }
