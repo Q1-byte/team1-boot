@@ -1,28 +1,27 @@
 package com.example.jpa.domain.event.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
-import java.time.LocalDateTime;
-
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class EventDto {
-
-    @Getter @Setter
-    public static class Request {
-        private String title;
-        private String description;
-        private LocalDateTime startDate;
-        private LocalDateTime endDate;
-    }
-
-    @Getter @AllArgsConstructor
-    public static class Response {
-        private Long id;
-        private String title;
-        private String description;
-        private LocalDateTime startDate;
-        private LocalDateTime endDate;
-        private LocalDateTime createdAt;
-    }
+    private Long id;
+    private Long contentId;
+    private String name;
+    private String address;
+    private String addr2;
+    private String zipCode;
+    private String tel;
+    private String url; // imageUrl -> url
+    private String description; // [추가] 설명글
+    private String cat1;
+    private String category; // cat2 -> category
+    private String cat3;
+    private String startDate;
+    private String endDate;
+    private Double mapX;
+    private Double mapY;
 }
