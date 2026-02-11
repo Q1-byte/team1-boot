@@ -27,4 +27,4 @@ public class SpotKeyword {
     @JoinColumn(name = "keyword_id")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Keyword keyword;
-}
+} //추가

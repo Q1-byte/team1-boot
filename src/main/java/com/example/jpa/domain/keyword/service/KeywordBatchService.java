@@ -87,6 +87,6 @@ public class KeywordBatchService {
         if (target.contains("체험") || target.contains("공방") || target.contains("클래스") || target.contains("만들기"))
             return 8;
 
-        return null;
+        return null; //추가
     }
 }

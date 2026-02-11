@@ -5,4 +5,4 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface KeywordRepository extends JpaRepository<Keyword, Integer> {
     java.util.Optional<Keyword> findByName(String name);
-}
+} //추가
