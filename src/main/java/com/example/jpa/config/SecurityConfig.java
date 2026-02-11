@@ -4,7 +4,6 @@ import com.example.jpa.domain.user.service.OAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
@@ -31,32 +30,34 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    // ... 상단 생략
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth
-                // 이벤트: 조회는 공개, 등록/수정/삭제는 관리자만
-                .requestMatchers(HttpMethod.GET, "/api/events/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/events/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/events/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/events/**").hasRole("ADMIN")
-                // 랜덤매칭: 로그인 유저만
-                .requestMatchers("/api/random-match/**").authenticated()
-                // 나머지 API는 공개 (팀원 작업 중인 plans 등 영향 없도록)
-                .requestMatchers("/api/**").permitAll()
-                .requestMatchers("/oauth2/**", "/login/**").permitAll()
-                .requestMatchers("/payment/**").permitAll()
-                .requestMatchers("/admin/**").hasRole("ADMIN")
-                .anyRequest().authenticated()
-            )
-            .oauth2Login(oauth2 -> oauth2
-                .userInfoEndpoint(userInfo -> userInfo
-                    .userService(oAuth2UserService)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
+                .formLogin(form -> form.disable())
+                .httpBasic(basic -> basic.disable())
+                .logout(logout -> logout.disable())
+
+                .authorizeHttpRequests(auth -> auth
+                        // 1. 배치를 실행하기 위해 이 경로를 최상단에 추가 (permitAll)
+                        .requestMatchers("/admin/batch/**").permitAll()
+
+                        // 2. 나머지 설정들
+                        .requestMatchers("/api/**").permitAll()
+                        .requestMatchers("/oauth2/**", "/login/**", "/payment/**").permitAll()
+
+                        // 3. 실제 관리자 기능은 여기서 보호 (배치 제외)
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+
+                        .anyRequest().permitAll()
                 )
-                .successHandler(oAuth2SuccessHandler)
-            );
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService))
+                        .successHandler(oAuth2SuccessHandler)
+                );
 
         return http.build();
     }
