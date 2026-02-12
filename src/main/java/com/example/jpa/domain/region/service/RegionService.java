@@ -22,4 +22,12 @@ public class RegionService {
     public List<Region> findAll() {
         return regionRepository.findAll();
     }
+
+    public List<Region> findParentRegions() {
+        return regionRepository.findByParentIsNullOrderByIdAsc();
+    }
+
+    public List<Region> findSubRegions(Long parentId) {
+        return regionRepository.findByParentIdAndIsActiveTrueOrderByIdAsc(parentId);
+    }
 }
