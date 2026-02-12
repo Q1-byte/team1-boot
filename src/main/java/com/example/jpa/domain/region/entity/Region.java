@@ -16,10 +16,14 @@ public class Region {
 
     private String cityName; // 도시명
     private String areaCode; // 지역코드
+    private String sigunguCode;
 
     @Column(updatable = false)
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    @Column(name = "level") // DB 컬럼과 매핑
+    private Integer level;
 
     @PrePersist
     public void prePersist() {

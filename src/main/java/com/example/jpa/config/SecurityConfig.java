@@ -44,6 +44,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 1. 배치를 실행하기 위해 이 경로를 최상단에 추가 (permitAll)
                         .requestMatchers("/admin/batch/**").permitAll()
+                        .requestMatchers("/api/gacha/**").permitAll()
 
                         // 2. 나머지 설정들
                         .requestMatchers("/api/**").permitAll()
