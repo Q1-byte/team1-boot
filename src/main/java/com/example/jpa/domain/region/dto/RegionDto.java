@@ -8,14 +8,14 @@ public class RegionDto {
 
     @Getter @Setter
     public static class Request {
-        private String cityName;
+        private String name;
         private String areaCode;
     }
 
     @Getter @AllArgsConstructor
     public static class Response {
         private Long id;
-        private String cityName;
+        private String name;
         private String areaCode;
     }
 }

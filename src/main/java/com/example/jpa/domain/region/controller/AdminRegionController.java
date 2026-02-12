@@ -26,7 +26,7 @@ public class AdminRegionController {
 
 
         region.setAreaCode(request.getAreaCode());
-        region.setCityName(request.getCityName());
+        region.setName(request.getName());
 
         return ResponseEntity.ok(regionService.saveRegion(region));
     }
