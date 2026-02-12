@@ -21,6 +21,9 @@ public class Keyword {
     @Column(nullable = false, unique = true)
     private String name;        // 키워드 이름 (예: #조용한, #주차가능)
 
+    @Column(length = 20)
+    private String category;    // 카테고리 (테마, 환경, 조건)
+
     @Builder.Default
     private boolean active = true; // 활성화 여부
 
