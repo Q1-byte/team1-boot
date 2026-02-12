@@ -32,7 +32,7 @@ public class GachaService {
         // 2. 지역 정보 안전하게 추출 (Null 체크)
         // spot.getRegion()이 null인 '지뢰 데이터'를 대비합니다.
         Long regionId = (spot.getRegion() != null) ? spot.getRegion().getId() : null;
-        String regionName = (spot.getRegion() != null) ? spot.getRegion().getCityName() : "지역 정보 없음";
+        String regionName = (spot.getRegion() != null) ? spot.getRegion().getName() : "지역 정보 없음";
 
         // 3. "내가 가진 키워드 풀에서 랜덤 3개" 로직
         List<Keyword> allKeywords = keywordRepository.findAll();
@@ -55,9 +55,9 @@ public class GachaService {
         return GachaResponseDto.builder()
                 .id(spot.getId())
                 // .name(spot.getName()) // 기존: 육삼월 충주본점
-                .name(spot.getRegion().getCityName()) // 변경: 충청북도 (Region의 이름 사용)
+                .name(spot.getRegion().getName()) // 변경: 충청북도 (Region의 이름 사용)
                 .regionId(spot.getRegion().getId())
-                .regionName(spot.getRegion().getCityName())
+                .regionName(spot.getRegion().getName())
                 .keywords(randomKeywords)
                 .build();
     }

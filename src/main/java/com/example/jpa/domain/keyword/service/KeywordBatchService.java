@@ -35,14 +35,14 @@ public class KeywordBatchService {
 
     static {
         // [테마] 카테고리
-        KEYWORD_PATTERNS.put("스릴", List.of("놀이기구", "번지점프", "래프팅", "스카이다이빙", "짚라인", "스릴", "롤러코스터", "바이킹", "카트", "VR"));
-        KEYWORD_PATTERNS.put("자연", List.of("공원", "숲", "수목원", "자연", "생태", "산림", "식물원", "습지", "계곡", "폭포"));
-        KEYWORD_PATTERNS.put("힐링", List.of("스파", "온천", "찜질", "힐링", "명상", "요가", "테라피", "휴양", "사우나", "족욕"));
-        KEYWORD_PATTERNS.put("트레킹", List.of("등산", "트레킹", "산행", "하이킹", "둘레길", "올레길", "산책로", "탐방로", "코스", "길"));
-        KEYWORD_PATTERNS.put("데이트", List.of("카페", "레스토랑", "데이트", "야경", "전망대", "루프탑", "커플", "분위기"));
-        KEYWORD_PATTERNS.put("추억", List.of("사진", "포토", "추억", "인생샷", "스냅", "촬영", "포토존"));
-        KEYWORD_PATTERNS.put("예술", List.of("미술관", "갤러리", "전시", "아트", "예술", "공연", "뮤지컬", "연극", "콘서트"));
-        KEYWORD_PATTERNS.put("체험", List.of("체험", "공방", "클래스", "만들기", "DIY", "쿠킹", "도예", "염색", "목공"));
+        KEYWORD_PATTERNS.put("스릴", List.of("놀이기구", "번지점프", "래프팅", "스카이다이빙", "짚라인", "스릴", "롤러코스터", "바이킹", "카트", "VR", "어드벤처", "서바이벌", "ATV", "패러글라이딩", "보트"));
+        KEYWORD_PATTERNS.put("자연", List.of("공원", "숲", "수목원", "자연", "생태", "산림", "식물원", "습지", "계곡", "폭포", "해변", "바다", "강", "호수", "섬", "산", "들", "정원", "녹지", "하늘", "일출", "일몰"));
+        KEYWORD_PATTERNS.put("힐링", List.of("스파", "온천", "찜질", "힐링", "명상", "요가", "테라피", "휴양", "사우나", "족욕", "마사지", "웰니스", "쉼", "휴식", "산책", "조용", "평화", "여유"));
+        KEYWORD_PATTERNS.put("트레킹", List.of("등산", "트레킹", "산행", "하이킹", "둘레길", "올레길", "산책로", "탐방로", "코스", "길", "봉", "재", "고개", "능선", "숲길", "해파랑길"));
+        KEYWORD_PATTERNS.put("데이트", List.of("카페", "레스토랑", "데이트", "야경", "전망대", "루프탑", "커플", "분위기", "맛집", "디저트", "베이커리", "와인", "브런치", "파스타", "이탈리안", "프렌치"));
+        KEYWORD_PATTERNS.put("추억", List.of("사진", "포토", "추억", "인생샷", "스냅", "촬영", "포토존", "벽화", "마을", "거리", "야시장", "시장", "먹거리", "축제"));
+        KEYWORD_PATTERNS.put("예술", List.of("미술관", "갤러리", "전시", "아트", "예술", "공연", "뮤지컬", "연극", "콘서트", "박물관", "기념관", "문화", "역사", "유적", "고궁", "사찰", "서원"));
+        KEYWORD_PATTERNS.put("체험", List.of("체험", "공방", "클래스", "만들기", "DIY", "쿠킹", "도예", "염색", "목공", "농장", "목장", "낚시", "수확", "떡", "한복", "전통", "공예"));
 
         // [환경] 카테고리
         KEYWORD_PATTERNS.put("오션뷰", List.of("바다", "해변", "오션", "해수욕", "해안", "갯벌", "항구", "포구", "등대"));
@@ -66,6 +66,13 @@ public class KeywordBatchService {
 
     @Transactional
     public void runInitialCategorization() {
+        // 이미 키워드 매핑이 되어 있으면 스킵
+        long spotKeywordCount = keywordRepository.countMappedSpotKeywords();
+        if (spotKeywordCount > 0) {
+            System.out.println(">>> 키워드 매핑 데이터가 이미 존재합니다 (" + spotKeywordCount + "건). 배치를 건너뜁니다.");
+            return;
+        }
+
         // 1. DB에서 모든 키워드 로드 (name 기준 맵)
         List<Keyword> allKeywords = keywordRepository.findAll();
         Map<String, Keyword> keywordByName = new HashMap<>();

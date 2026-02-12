@@ -18,4 +18,12 @@ public interface TravelSpotRepository extends JpaRepository<TravelSpot, Long> {
     List<TravelSpot> findAllByKeywordsAndCategory(
             @Param("keywordNames") List<String> keywordNames,
             @Param("category") String category);
+
+    // 지역 + 카테고리만으로 장소 찾기 (키워드 매칭 부족 시 fallback)
+    @Query("SELECT ts FROM TravelSpot ts " +
+            "WHERE ts.category = :category " +
+            "AND ts.address LIKE %:region%")
+    List<TravelSpot> findByCategoryAndRegion(
+            @Param("category") String category,
+            @Param("region") String region);
 }

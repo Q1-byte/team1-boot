@@ -28,7 +28,7 @@ public class GachaResponseDto {
 
         // 📍 Region 엔티티의 cityName 필드 매핑
         if (spot.getRegion() != null) {
-            this.regionName = spot.getRegion().getCityName();
+            this.regionName = spot.getRegion().getName();
             this.areaCode = spot.getRegion().getAreaCode();
             this.sigunguCode = spot.getRegion().getSigunguCode();
         }

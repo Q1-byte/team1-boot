@@ -55,8 +55,8 @@ public class PlanService {
      */
     public TravelPlanResponseDto createPlan(List<String> keywords, String region) {
         // 1. 카테고리별 데이터 가져오기 (식당 39, 관광지 14/12/28)
-        List<TravelSpot> allRestaurants = travelSpotRepository.findAllByKeywordsAndCategory(keywords, "39");
-        List<TravelSpot> attractions = travelSpotRepository.findAllByKeywordsAndCategory(keywords, "14");
+        List<TravelSpot> allRestaurants = new ArrayList<>(travelSpotRepository.findAllByKeywordsAndCategory(keywords, "39"));
+        List<TravelSpot> attractions = new ArrayList<>(travelSpotRepository.findAllByKeywordsAndCategory(keywords, "14"));
 
         // 관광지 데이터 보강 (12번, 28번도 있다면 추가)
         attractions.addAll(travelSpotRepository.findAllByKeywordsAndCategory(keywords, "12"));
@@ -64,8 +64,31 @@ public class PlanService {
 
         // 2. 지역 필터링
         if (region != null && !region.isEmpty()) {
-            allRestaurants = allRestaurants.stream().filter(s -> s.getAddress().contains(region)).collect(Collectors.toList());
-            attractions = attractions.stream().filter(s -> s.getAddress().contains(region)).collect(Collectors.toList());
+            allRestaurants = allRestaurants.stream().filter(s -> s.getAddress().contains(region)).collect(Collectors.toCollection(ArrayList::new));
+            attractions = attractions.stream().filter(s -> s.getAddress().contains(region)).collect(Collectors.toCollection(ArrayList::new));
+
+            // 3. 키워드 매칭으로 부족하면 같은 지역 전체에서 보충
+            final int MIN_RESTAURANTS = 8;
+            final int MIN_ATTRACTIONS = 8;
+
+            if (allRestaurants.size() < MIN_RESTAURANTS) {
+                Set<Long> existingIds = allRestaurants.stream().map(TravelSpot::getId).collect(Collectors.toSet());
+                List<TravelSpot> fallbackRestaurants = travelSpotRepository.findByCategoryAndRegion("39", region)
+                        .stream().filter(s -> !existingIds.contains(s.getId())).collect(Collectors.toList());
+                Collections.shuffle(fallbackRestaurants);
+                allRestaurants.addAll(fallbackRestaurants.subList(0, Math.min(fallbackRestaurants.size(), MIN_RESTAURANTS - allRestaurants.size())));
+            }
+
+            if (attractions.size() < MIN_ATTRACTIONS) {
+                Set<Long> existingIds = attractions.stream().map(TravelSpot::getId).collect(Collectors.toSet());
+                List<TravelSpot> fallbackAttractions = new ArrayList<>();
+                for (String cat : Arrays.asList("14", "12", "28")) {
+                    fallbackAttractions.addAll(travelSpotRepository.findByCategoryAndRegion(cat, region));
+                }
+                fallbackAttractions = fallbackAttractions.stream().filter(s -> !existingIds.contains(s.getId())).collect(Collectors.toList());
+                Collections.shuffle(fallbackAttractions);
+                attractions.addAll(fallbackAttractions.subList(0, Math.min(fallbackAttractions.size(), MIN_ATTRACTIONS - attractions.size())));
+            }
         }
 
         // 3. ☕ 카페 세부 필터링 (식당 리스트에서 분리)
