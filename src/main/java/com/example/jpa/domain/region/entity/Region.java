@@ -29,6 +29,9 @@ public class Region {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    @Column(name = "level") // DB 컬럼과 매핑
+    private Integer level;
+
     @PrePersist
     public void prePersist() {
         LocalDateTime now = LocalDateTime.now();

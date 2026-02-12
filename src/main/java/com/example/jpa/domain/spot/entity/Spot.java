@@ -1,13 +1,15 @@
 package com.example.jpa.domain.spot.entity;
 
+import com.example.jpa.domain.keyword.entity.SpotKeyword;
+import com.example.jpa.domain.region.entity.Region;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "travel_spot")
@@ -21,35 +23,46 @@ public class Spot {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 1. API 중복 체크를 위한 고유 ID (TourAPI의 contentid)
-    @Column(unique = true, nullable = false)
-    private String apiId;
-
-    @Column(nullable = false)
-    private String name;
-
-    private String description;
-
-    // 2. 이미지 주소를 저장할 필드 추가
-    @Column(length = 500) // URL은 길어질 수 있으니 여유 있게 설정
-    private String imageUrl;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "region_id", insertable = false, updatable = false)
+    private Region region;
 
     @Column(name = "region_id")
     private Long regionId;
 
-    private String address;
-    private String category;
-
-    // 정밀도 높은 좌표 관리 (아주 좋습니다!)
-    private Double latitude;
-    private Double longitude;
-
-    @Column(name = "avg_price")
-    private Integer avgPrice;
-
+    // ✅ 중복 선언 제거 및 깔끔하게 정리
     @Column(name = "is_active")
     @Builder.Default
     private Boolean isActive = true;
+    @Column(nullable = false)
+    private String name;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    private Integer level;
+
+    @Column(unique = true, nullable = false)
+    private String apiId;
+
+    @OneToMany(mappedBy = "spot")
+    @Builder.Default
+    private List<SpotKeyword> spotKeywords = new ArrayList<>();
+
+    public List<String> getKeywordsList() {
+        if (this.spotKeywords == null || this.spotKeywords.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return spotKeywords.stream()
+                .map(sk -> sk.getKeyword().getName())
+                .collect(Collectors.toList());
+    }
+
+    private String imageUrl;
+    private String address;
+    private String category;
+    private Double latitude;
+    private Double longitude;
 
     @CreationTimestamp
     @Column(name = "created_at")
