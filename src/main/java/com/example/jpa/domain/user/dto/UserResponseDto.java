@@ -14,6 +14,7 @@ public class UserResponseDto {
     
     private Long id;
     private String username;
+    private String nickname;
     private String email;
     private String phone;
     private String role;
@@ -26,6 +27,7 @@ public class UserResponseDto {
         return UserResponseDto.builder()
                 .id(user.getId())
                 .username(user.getUsername())
+                .nickname(user.getNickname())
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .role(user.getRole())

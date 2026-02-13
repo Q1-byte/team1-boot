@@ -11,6 +11,7 @@ import lombok.*;
 public class SignupRequestDto {
     
     private String username;
+    private String nickname;
     private String password;
     private String passwordConfirm;
     private String email;
@@ -21,6 +22,7 @@ public class SignupRequestDto {
     public User toEntity(String encodedPassword) {
         return User.builder()
                 .username(this.username)
+                .nickname(this.nickname)
                 .password(encodedPassword)
                 .email(this.email)
                 .phone(this.phone)
