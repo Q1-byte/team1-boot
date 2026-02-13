@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/events")
 @RequiredArgsConstructor
+@CrossOrigin(originPatterns = "*", allowCredentials = "true") // [수정] 보안 정책에 따라 originPatterns 사용
 public class EventController {
 
     private final EventService eventService;

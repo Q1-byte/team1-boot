@@ -5,13 +5,13 @@ import com.example.jpa.domain.event.entity.Event;
 import com.example.jpa.domain.event.repository.EventRepository;
 import com.example.jpa.domain.event.type.EventCategory;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j
+@Log4j2
 @Service
 @RequiredArgsConstructor
 public class EventService {
@@ -24,10 +24,15 @@ public class EventService {
     @Transactional(readOnly = true)
     public Page<EventDto> getEvents(String name, EventCategory type, Pageable pageable) {
         Page<Event> page;
-        if (name != null && !name.isEmpty()) {
+        boolean hasName = name != null && !name.isEmpty();
+        boolean hasType = type != null;
+
+        if (hasName && hasType) {
+            page = eventRepository.findByNameContainingAndCat2(name, type.getDescription(), pageable);
+        } else if (hasName) {
             page = eventRepository.findByNameContaining(name, pageable);
-        } else if (type != null && type.getPublicCode() != null) {
-            page = eventRepository.findByCat2(type.getPublicCode(), pageable);
+        } else if (hasType) {
+            page = eventRepository.findByCat2(type.getDescription(), pageable);
         } else {
             page = eventRepository.findAll(pageable);
         }
