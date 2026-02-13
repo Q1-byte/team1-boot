@@ -22,6 +22,7 @@ public class DataInitializer implements CommandLineRunner {
         if (!userRepository.existsByUsername("admin1")) {
             User admin = User.builder()
                     .username("admin1")
+                    .nickname("무능한")
                     .password(passwordEncoder.encode("admin1234"))
                     .email("admin1@trip.com")
                     .phone("010-1234-5678")
@@ -37,6 +38,7 @@ public class DataInitializer implements CommandLineRunner {
         if (!userRepository.existsByUsername("user1")) {
             User user1 = User.builder()
                     .username("user1")
+                    .nickname("지진희")
                     .password(passwordEncoder.encode("user1234"))
                     .email("user1@trip.com")
                     .phone("010-9876-5432")
@@ -51,6 +53,7 @@ public class DataInitializer implements CommandLineRunner {
         if (!userRepository.existsByUsername("test")) {
             User test = User.builder()
                     .username("test")
+                    .nickname("김상중")
                     .password(passwordEncoder.encode("test1234"))
                     .email("test@trip.com")
                     .phone("010-1111-2222")
