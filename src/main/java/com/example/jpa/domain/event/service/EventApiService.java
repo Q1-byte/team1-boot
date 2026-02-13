@@ -15,6 +15,8 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 @Log4j2
 @Service
@@ -30,7 +32,7 @@ public class EventApiService {
     @Value("${api.public-data.service-key}")
     private String serviceKey;
 
-    // @PostConstruct  // 외부 API 자동 호출 비활성화 (목업 데이터 사용)
+    @PostConstruct // 외부 API 자동 호출 활성화 (또는 목업 데이터 사용)
     public void init() {
         log.info("Log4j2 - [1. 진입] @PostConstruct 실행");
         fetchAndSaveEvents();
@@ -49,7 +51,7 @@ public class EventApiService {
                     + "&MobileApp=AppTest"
                     + "&numOfRows=500"
                     + "&pageNo=1"
-                    + "&eventStartDate=20260210";
+                    + "&eventStartDate=" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 
             URI uri = new URI(urlString);
             log.info("Log4j2 - [요청] URL 확인: {}", uri);
@@ -140,7 +142,8 @@ public class EventApiService {
                     .name(data[1])
                     .address(data[2])
                     .tel(data[3])
-                    .cat2(data[4]) // 코드로 먼저 넣고
+                    .tel(data[3])
+                    // .cat2(data[4]) // 중복 설정 제거 (아래 determineCategory에서 덮어씌움)
                     .imageUrl("/images/default-event.jpg")
                     .startDate(data[5])
                     .endDate(data[6])
@@ -177,13 +180,18 @@ public class EventApiService {
             event.setCat3(node.path("cat3").asText());
             event.setStartDate(node.path("eventstartdate").asText());
             event.setEndDate(node.path("eventenddate").asText());
-            event.setMapX(node.path("mapx").asDouble());
-            event.setMapY(node.path("mapy").asDouble());
+            double xVal = node.path("mapx").asDouble(0.0);
+            double yVal = node.path("mapy").asDouble(0.0);
 
-            // [설명글 자동 생성] 제목, 주소, 전화번호를 조합하여 풍성하게 만듦
-            String generatedDesc = String.format("[%s] 축제는 %s에서 진행됩니다. 문의처: %s",
-                    event.getName(), event.getAddress(), event.getTel().isEmpty() ? "정보 없음" : event.getTel());
-            event.setDescription(generatedDesc);
+            // [보완] 좌표값 유효성 검사 (0.0은 좌표 없음으로 간주함)
+            if (xVal == 0.0 || yVal == 0.0) {
+                // 필요시 로그: log.debug("좌표 정보 없음: {}", event.getName());
+                event.setMapX(0.0);
+                event.setMapY(0.0);
+            } else {
+                event.setMapX(xVal);
+                event.setMapY(yVal);
+            }
 
             eventRepository.save(event);
             count++;
