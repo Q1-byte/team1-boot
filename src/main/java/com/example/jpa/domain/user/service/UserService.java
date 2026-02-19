@@ -153,10 +153,14 @@ public class UserService {
     // ==================== 관리자용 메서드 ====================
 
     /**
-     * 전체 회원 목록 조회 (페이징)
+     * 회원 목록 조회 (페이징 + keyword 검색 + role 필터)
      */
-    public Page<User> findAll(Pageable pageable) {
-        return userRepository.findAll(pageable);
+    public Page<UserResponseDto> findAll(String keyword, String role, Pageable pageable) {
+        return userRepository.searchUsers(
+                (keyword != null && !keyword.isBlank()) ? keyword : null,
+                (role != null && !role.isBlank()) ? role : null,
+                pageable
+        ).map(UserResponseDto::fromEntity);
     }
 
     /**
@@ -167,6 +171,17 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("해당 회원이 존재하지 않습니다."));
         user.setStatus(status);
+    }
+
+    /**
+     * 포인트 수정 (관리자용)
+     */
+    @Transactional
+    public UserResponseDto updatePoint(Long id, Integer point) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("해당 회원이 존재하지 않습니다."));
+        user.setPoint(point);
+        return UserResponseDto.fromEntity(user);
     }
 
     /**

@@ -3,6 +3,7 @@ package com.example.jpa.domain.payment.dto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
@@ -18,4 +19,18 @@ public class PaymentDto {
     private String status;      // 결제 상태 (PAID, CANCELLED 등)
     private String buyerName;   // 구매자 이름
     private LocalDateTime payDate; // 결제 일시
+
+    // 어드민 응답용
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    public static class AdminResponse {
+        private Long id;
+        private String username;       // partnerUserId
+        private String planTitle;      // itemName
+        private Integer amount;        // totalAmount
+        private String paymentMethod;
+        private String status;
+        private LocalDateTime paidAt;  // approvedAt
+    }
 }

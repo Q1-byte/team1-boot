@@ -2,9 +2,12 @@ package com.example.jpa.domain.spot.service;
 
 import com.example.jpa.domain.region.entity.Region;
 import com.example.jpa.domain.region.repository.RegionRepository;
+import com.example.jpa.domain.spot.dto.SpotDto;
 import com.example.jpa.domain.spot.entity.Spot;
 import com.example.jpa.domain.spot.repository.SpotRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +16,70 @@ import org.springframework.transaction.annotation.Transactional;
 public class SpotService {
     private final SpotRepository spotRepository;
     private final RegionRepository regionRepository;
+
+    // ───────── 어드민 CRUD ─────────
+
+    @Transactional(readOnly = true)
+    public Page<SpotDto.AdminResponse> getSpotList(String keyword, Boolean isActive, Pageable pageable) {
+        return spotRepository.searchSpots(
+                (keyword != null && !keyword.isBlank()) ? keyword : null,
+                isActive,
+                pageable
+        ).map(this::toAdminResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public SpotDto.AdminResponse getSpot(Long id) {
+        Spot spot = spotRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행지입니다. id=" + id));
+        return toAdminResponse(spot);
+    }
+
+    @Transactional
+    public SpotDto.AdminResponse createSpot(SpotDto.Request request) {
+        Spot spot = Spot.builder()
+                .apiId("MANUAL_" + System.currentTimeMillis())
+                .name(request.getName())
+                .address(request.getAddress())
+                .description(request.getDescription())
+                .category(request.getCategory())
+                .latitude(request.getLatitude())
+                .longitude(request.getLongitude())
+                .imageUrl(request.getImageUrl())
+                .level(request.getLevel())
+                .regionId(request.getRegionId())
+                .isActive(true)
+                .build();
+        return toAdminResponse(spotRepository.save(spot));
+    }
+
+    @Transactional
+    public SpotDto.AdminResponse updateSpot(Long id, SpotDto.UpdateRequest request) {
+        Spot spot = spotRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행지입니다. id=" + id));
+        spot.update(request.getName(), request.getAddress(), request.getDescription(),
+                request.getCategory(), request.getLatitude(), request.getLongitude(),
+                request.getImageUrl(), request.getLevel(), request.getIsActive(), request.getRegionId());
+        return toAdminResponse(spot);
+    }
+
+    @Transactional
+    public void deleteSpot(Long id) {
+        if (!spotRepository.existsById(id)) {
+            throw new IllegalArgumentException("존재하지 않는 여행지입니다. id=" + id);
+        }
+        spotRepository.deleteById(id);
+    }
+
+    @Transactional
+    public SpotDto.AdminResponse toggleActive(Long id) {
+        Spot spot = spotRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행지입니다. id=" + id));
+        spot.toggleActive();
+        return toAdminResponse(spot);
+    }
+
+    // ───────── API 데이터 수집용 ─────────
 
     @Transactional
     public void registerSpot(String apiId, String title, String addr, String mapx, String mapy, String imageUrl, String categoryId, String areaCode) {
@@ -42,5 +109,24 @@ public class SpotService {
 
         // 4. DB 저장
         spotRepository.save(spot);
+    }
+
+    // ───────── 내부 변환 ─────────
+
+    private SpotDto.AdminResponse toAdminResponse(Spot spot) {
+        return SpotDto.AdminResponse.builder()
+                .id(spot.getId())
+                .name(spot.getName())
+                .address(spot.getAddress())
+                .imageUrl(spot.getImageUrl())
+                .category(spot.getCategory())
+                .latitude(spot.getLatitude())
+                .longitude(spot.getLongitude())
+                .description(spot.getDescription())
+                .level(spot.getLevel())
+                .isActive(spot.getIsActive())
+                .regionId(spot.getRegionId())
+                .createdAt(spot.getCreatedAt())
+                .build();
     }
 }
