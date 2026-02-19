@@ -28,7 +28,7 @@ public class MyPageApiController {
     /**
      * 마이페이지 메인 조회 (회원정보 + 최근 본 계획 3개)
      */
-    @GetMapping
+    @GetMapping({"", "/main"})
     public ResponseEntity<ApiResponse<MyPageResponseDto>> getMyPage(HttpSession session) {
         Long userId = getUserIdFromSession(session);
         if (userId == null) {

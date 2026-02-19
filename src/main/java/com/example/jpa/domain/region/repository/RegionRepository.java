@@ -11,6 +11,8 @@ import java.util.Optional;
 public interface RegionRepository extends JpaRepository<Region, Long> {
     Optional<Region> findByAreaCode(String areaCode);
 
+    Optional<Region> findByName(String name);
+
     // 부모 지역(시/도) 목록
     List<Region> findByParentIsNullOrderByIdAsc();
 

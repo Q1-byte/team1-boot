@@ -1,15 +1,25 @@
 package com.example.jpa.domain.plan.service;
 
+import com.example.jpa.domain.plan.dto.SavePlanRequestDto;
 import com.example.jpa.domain.plan.dto.TravelPlanResponseDto;
 import com.example.jpa.domain.plan.entity.Plan;
+import com.example.jpa.domain.plan.entity.TravelPlan;
 import com.example.jpa.domain.plan.entity.TravelSpot;
+import com.example.jpa.domain.plan.entity.PlanSpot;
 import com.example.jpa.domain.plan.repository.PlanRepository;
+import com.example.jpa.domain.plan.repository.PlanSpotRepository;
+import com.example.jpa.domain.plan.repository.TravelPlanRepository;
 import com.example.jpa.domain.plan.repository.TravelSpotRepository;
+import com.example.jpa.domain.region.repository.RegionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -17,7 +27,10 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class PlanService {
     private final PlanRepository planRepository;
+    private final TravelPlanRepository travelPlanRepository;
     private final TravelSpotRepository travelSpotRepository;
+    private final PlanSpotRepository planSpotRepository;
+    private final RegionRepository regionRepository;
 
     /**
      * [관리자용] 모든 플랜 조회
@@ -48,6 +61,89 @@ public class PlanService {
     @Transactional
     public void delete(Long id) {
         planRepository.deleteById(id);
+    }
+
+    /**
+     * [사용자용] 계획 삭제
+     */
+    @Transactional
+    public void deleteTravelPlan(Long planId) {
+        if (!travelPlanRepository.existsById(planId)) {
+            throw new NoSuchElementException("해당 계획이 존재하지 않습니다. id=" + planId);
+        }
+        planSpotRepository.deleteByPlanId(planId);
+        travelPlanRepository.deleteById(planId);
+    }
+
+    /**
+     * [사용자용] 저장된 계획 단건 조회 (schedule 포함)
+     */
+    public TravelPlanResponseDto getTravelPlan(Long planId) {
+        TravelPlan plan = travelPlanRepository.findById(planId)
+                .orElseThrow(() -> new NoSuchElementException("해당 계획이 존재하지 않습니다. id=" + planId));
+
+        // plan_spot → TravelSpot 조회 → schedule 재조립
+        Map<String, List<TravelSpot>> schedule = new LinkedHashMap<>();
+        List<PlanSpot> planSpots = planSpotRepository.findByPlanIdOrderByDayAsc(planId);
+        for (PlanSpot ps : planSpots) {
+            String key = "Day " + ps.getDay();
+            travelSpotRepository.findById(ps.getSpotId())
+                    .ifPresent(spot -> schedule.computeIfAbsent(key, k -> new ArrayList<>()).add(spot));
+        }
+
+        TravelPlanResponseDto dto = TravelPlanResponseDto.fromEntity(plan);
+        dto.setSchedule(schedule.isEmpty() ? null : schedule);
+
+        // regionId로 regionName 조회해서 region 필드에 설정
+        if (plan.getRegionId() != null) {
+            regionRepository.findById(plan.getRegionId())
+                    .ifPresent(r -> dto.setRegion(r.getName()));
+        }
+
+        return dto;
+    }
+
+    /**
+     * [사용자용] AI 추천 일정 저장
+     */
+    @Transactional
+    public TravelPlanResponseDto saveTravelPlan(SavePlanRequestDto request, Long userId) {
+        DateTimeFormatter formatter = request.getStartDate().contains("-")
+                ? DateTimeFormatter.ISO_LOCAL_DATE
+                : DateTimeFormatter.ofPattern("yyyy. M. d.");
+        LocalDate startDate = LocalDate.parse(request.getStartDate(), formatter);
+        LocalDate endDate = LocalDate.parse(request.getEndDate(), formatter);
+        int durationDays = (int) ChronoUnit.DAYS.between(startDate, endDate) + 1;
+
+        Long regionId = regionRepository.findByName(request.getRegionName())
+                .map(r -> r.getId())
+                .orElse(null);
+
+        TravelPlan plan = TravelPlan.builder()
+                .userId(userId)
+                .type("CUSTOM")
+                .title(request.getRegionName() + " AI 맞춤 여행 일정")
+                .regionId(regionId)
+                .peopleCount(request.getPeopleCount() != null ? request.getPeopleCount() : 1)
+                .travelDate(startDate)
+                .durationDays(durationDays)
+                .status("AI_SAVED")
+                .build();
+
+        TravelPlan saved = travelPlanRepository.save(plan);
+
+        // spots 저장
+        if (request.getSpots() != null) {
+            for (SavePlanRequestDto.SpotEntry entry : request.getSpots()) {
+                planSpotRepository.save(PlanSpot.builder()
+                        .planId(saved.getId())
+                        .spotId(entry.getSpotId())
+                        .day(entry.getDay())
+                        .build());
+            }
+        }
+
+        return TravelPlanResponseDto.fromEntity(saved);
     }
 
     /**
