@@ -1,6 +1,7 @@
 package com.example.jpa.domain.payment.service;
 
 import com.example.jpa.domain.history.service.HistoryService;
+import com.example.jpa.domain.payment.dto.PaymentDto;
 import com.example.jpa.domain.payment.entity.Payment;
 import com.example.jpa.domain.payment.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,9 +18,24 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final HistoryService historyService;
 
-    // 전체 결제 내역 조회 (페이징)
-    public Page<Payment> getPaymentList(Pageable pageable) {
-        return paymentRepository.findAll(pageable);
+    // 어드민 결제 내역 조회 (페이징 + status 필터)
+    public Page<PaymentDto.AdminResponse> getPaymentList(String status, Pageable pageable) {
+        return paymentRepository.searchPayments(
+                (status != null && !status.isBlank()) ? status : null,
+                pageable
+        ).map(this::toAdminResponse);
+    }
+
+    private PaymentDto.AdminResponse toAdminResponse(Payment payment) {
+        return PaymentDto.AdminResponse.builder()
+                .id(payment.getId())
+                .username(payment.getPartnerUserId())
+                .planTitle(payment.getItemName())
+                .amount(payment.getTotalAmount())
+                .paymentMethod(payment.getPaymentMethod())
+                .status(payment.getStatus())
+                .paidAt(payment.getApprovedAt())
+                .build();
     }
 
     // 오늘 총 매출액 계산 (Repository에 관련 메서드가 있다고 가정)

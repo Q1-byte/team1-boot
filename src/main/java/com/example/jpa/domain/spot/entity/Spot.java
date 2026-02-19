@@ -67,4 +67,23 @@ public class Spot {
     @CreationTimestamp
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    public void update(String name, String address, String description, String category,
+                       Double latitude, Double longitude, String imageUrl, Integer level,
+                       Boolean isActive, Long regionId) {
+        if (name != null) this.name = name;
+        if (address != null) this.address = address;
+        if (description != null) this.description = description;
+        if (category != null) this.category = category;
+        if (latitude != null) this.latitude = latitude;
+        if (longitude != null) this.longitude = longitude;
+        if (imageUrl != null) this.imageUrl = imageUrl;
+        if (level != null) this.level = level;
+        if (isActive != null) this.isActive = isActive;
+        if (regionId != null) this.regionId = regionId;
+    }
+
+    public void toggleActive() {
+        this.isActive = !Boolean.TRUE.equals(this.isActive);
+    }
 }

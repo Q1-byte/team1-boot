@@ -1,6 +1,6 @@
 package com.example.jpa.domain.payment.controller;
 
-import com.example.jpa.domain.payment.entity.Payment;
+import com.example.jpa.domain.payment.dto.PaymentDto;
 import com.example.jpa.domain.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -15,10 +15,12 @@ public class AdminPaymentController {
 
     private final PaymentService paymentService;
 
-    // 결제 리스트 조회
+    // 결제 리스트 조회 (페이지네이션 + status 필터)
     @GetMapping
-    public ResponseEntity<Page<Payment>> list(Pageable pageable) {
-        return ResponseEntity.ok(paymentService.getPaymentList(pageable));
+    public ResponseEntity<Page<PaymentDto.AdminResponse>> list(
+            @RequestParam(required = false) String status,
+            Pageable pageable) {
+        return ResponseEntity.ok(paymentService.getPaymentList(status, pageable));
     }
 
     // 오늘 총 매출액 확인 (대시보드 상단 카드용)
