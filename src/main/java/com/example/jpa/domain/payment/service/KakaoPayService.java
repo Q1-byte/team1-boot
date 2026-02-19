@@ -3,6 +3,8 @@ package com.example.jpa.domain.payment.service;
 import com.example.jpa.domain.payment.dto.KakaoPayReadyResponse;
 import com.example.jpa.domain.payment.entity.Payment;
 import com.example.jpa.domain.payment.repository.PaymentRepository;
+import com.example.jpa.domain.plan.entity.TravelPlan;
+import com.example.jpa.domain.plan.repository.TravelPlanRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -22,6 +24,7 @@ import java.util.UUID;
 public class KakaoPayService {
 
     private final PaymentRepository paymentRepository;
+    private final TravelPlanRepository travelPlanRepository;
 
     @Value("${kakao.admin-key}")
     private String KAKAO_ADMIN_KEY;
@@ -125,11 +128,16 @@ public class KakaoPayService {
 
         // 3. 결제 상태 업데이트 (Dirty Checking 활용)
         if (response != null) {
-            // "MONEY" 또는 "CARD" 같은 결제 수단 정보 업데이트
-            String method = (String) response.get("payment_method_type");
             paymentInfo.updateStatus("COMPLETED", tid);
-            // 만약 엔티티에 paymentMethod 필드를 만드셨다면 set 해주세요.
-            // paymentInfo.setPaymentMethod(method);
+
+            // 4. TravelPlan 상태 PAID + totalPrice 업데이트
+            if (paymentInfo.getPlanId() != null) {
+                travelPlanRepository.findById(paymentInfo.getPlanId())
+                        .ifPresent(plan -> {
+                            plan.setStatus("PAID");
+                            plan.setTotalPrice(paymentInfo.getTotalAmount());
+                        });
+            }
         }
 
         return "success";

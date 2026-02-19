@@ -70,7 +70,7 @@ public class MyPageService {
      * 내 여행 계획 목록 조회
      */
     public List<TravelPlanResponseDto> getMyPlans(Long userId) {
-        return travelPlanRepository.findByUserIdOrderByCreatedAtDesc(userId)
+        return travelPlanRepository.findByUserIdAndStatusNotOrderByCreatedAtDesc(userId, "AI_SAVED")
                 .stream()
                 .map(TravelPlanResponseDto::fromEntity)
                 .collect(Collectors.toList());

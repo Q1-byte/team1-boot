@@ -3,6 +3,7 @@ package com.example.jpa.domain.payment.service;
 import com.example.jpa.domain.payment.dto.TossPaymentConfirmRequest;
 import com.example.jpa.domain.payment.entity.Payment;
 import com.example.jpa.domain.payment.repository.PaymentRepository;
+import com.example.jpa.domain.plan.repository.TravelPlanRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.util.Map;
 public class TossPaymentService {
 
     private final PaymentRepository paymentRepository;
+    private final TravelPlanRepository travelPlanRepository;
     private final String TOSS_SECRET_KEY = "test_sk_GjLJoQ1aVZp9PZn7m5YJ8w6KYe2R";
 
     @Transactional
@@ -45,18 +47,24 @@ public class TossPaymentService {
             Payment payment = paymentRepository.findByPartnerOrderId(request.getOrderId())
                     .orElseGet(() -> Payment.builder()
                             .partnerOrderId(request.getOrderId())
-                            .userId(1L) // 임시 유저 ID (실제로는 세션 등에서 가져와야 함)
-                            .planId(1L) // 임시 플랜 ID
+                            .planId(request.getPlanId())
                             .totalAmount(Math.toIntExact(request.getAmount()))
                             .createdAt(LocalDateTime.now())
                             .build());
 
             if ("가상계좌".equals(method)) {
-                // 가상계좌는 발급만 된 상태이므로 "WAITING_FOR_DEPOSIT" 상태로 저장
                 payment.updateStatus("WAITING_FOR_DEPOSIT", request.getPaymentKey());
             } else {
-                // 카드 결제 등은 즉시 완료
                 payment.updateStatus("COMPLETED", request.getPaymentKey());
+
+                // TravelPlan 상태 PAID + totalPrice 업데이트
+                if (payment.getPlanId() != null) {
+                    travelPlanRepository.findById(payment.getPlanId())
+                            .ifPresent(plan -> {
+                                plan.setStatus("PAID");
+                                plan.setTotalPrice(payment.getTotalAmount());
+                            });
+                }
             }
 
             paymentRepository.save(payment);

@@ -15,6 +15,8 @@ public class ViewHistoryResponseDto {
 
     private Long id;
     private Long planId;
+    private String name;     // plan title
+    private String region;   // plan region
     private LocalDateTime viewedAt;
     private TravelPlanResponseDto plan;
 
@@ -30,6 +32,8 @@ public class ViewHistoryResponseDto {
         return ViewHistoryResponseDto.builder()
                 .id(history.getId())
                 .planId(history.getPlanId())
+                .name(plan.getTitle())
+                .region(plan.getRegion())
                 .viewedAt(history.getViewedAt())
                 .plan(plan)
                 .build();
