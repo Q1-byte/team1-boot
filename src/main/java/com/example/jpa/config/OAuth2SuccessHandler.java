@@ -38,6 +38,9 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
+        // 세션에 userId 저장 (일반 로그인과 동일하게 처리)
+        request.getSession().setAttribute("userId", user.getId());
+
         // 임시 토큰 생성 (프론트엔드와 동일한 방식)
         String tokenData = String.format(
                 "{\"userId\":%d,\"username\":\"%s\",\"role\":\"%s\",\"exp\":%d}",

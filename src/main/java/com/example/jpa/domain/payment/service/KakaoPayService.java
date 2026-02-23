@@ -5,6 +5,9 @@ import com.example.jpa.domain.payment.entity.Payment;
 import com.example.jpa.domain.payment.repository.PaymentRepository;
 import com.example.jpa.domain.plan.entity.TravelPlan;
 import com.example.jpa.domain.plan.repository.TravelPlanRepository;
+import com.example.jpa.domain.point.entity.Point;
+import com.example.jpa.domain.point.repository.PointRepository;
+import com.example.jpa.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -16,6 +19,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -25,6 +29,8 @@ public class KakaoPayService {
 
     private final PaymentRepository paymentRepository;
     private final TravelPlanRepository travelPlanRepository;
+    private final UserRepository userRepository;
+    private final PointRepository pointRepository;
 
     @Value("${kakao.admin-key}")
     private String KAKAO_ADMIN_KEY;
@@ -99,7 +105,7 @@ public class KakaoPayService {
      * 결제 승인 (Approve)
      */
     @Transactional
-    public String kakaoPayApprove(String tid, String pgToken) {
+    public Map<String, Object> kakaoPayApprove(String tid, String pgToken, int usePoint) {
         RestTemplate restTemplate = new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
@@ -138,9 +144,38 @@ public class KakaoPayService {
                             plan.setTotalPrice(paymentInfo.getTotalAmount());
                         });
             }
+
+            // 5. 포인트 차감 및 적립
+            int earnedPoint = (int) (paymentInfo.getTotalAmount() * 0.005);
+            userRepository.findById(paymentInfo.getUserId()).ifPresent(user -> {
+                // 포인트 차감
+                if (usePoint > 0) {
+                    int actualUsePoint = Math.min(usePoint, user.getPoint());
+                    user.setPoint(user.getPoint() - actualUsePoint);
+                    pointRepository.save(Point.builder()
+                            .userId(user.getId())
+                            .amount(-actualUsePoint)
+                            .description("결제 포인트 사용")
+                            .build());
+                }
+                // 포인트 적립 (실결제금액의 1%)
+                if (earnedPoint > 0) {
+                    user.setPoint(user.getPoint() + earnedPoint);
+                    pointRepository.save(Point.builder()
+                            .userId(user.getId())
+                            .amount(earnedPoint)
+                            .description("결제 포인트 적립 (결제금액: " + paymentInfo.getTotalAmount() + "원)")
+                            .build());
+                }
+            });
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("result", "success");
+            result.put("earnedPoint", earnedPoint);
+            return result;
         }
 
-        return "success";
+        return Map.of("result", "success", "earnedPoint", 0);
     }
 
     /**

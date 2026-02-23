@@ -115,9 +115,9 @@ public class PlanService {
         LocalDate endDate = LocalDate.parse(request.getEndDate(), formatter);
         int durationDays = (int) ChronoUnit.DAYS.between(startDate, endDate) + 1;
 
-        Long regionId = regionRepository.findByName(request.getRegionName())
-                .map(r -> r.getId())
-                .orElse(null);
+        Long regionId = request.getRegionId() != null
+                ? request.getRegionId()
+                : regionRepository.findByName(request.getRegionName()).map(r -> r.getId()).orElse(null);
 
         TravelPlan plan = TravelPlan.builder()
                 .userId(userId)

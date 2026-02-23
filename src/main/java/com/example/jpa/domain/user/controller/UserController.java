@@ -114,17 +114,18 @@ public class UserController {
      * 회원정보 수정 처리
      */
     @PostMapping("/edit")
-    public String edit(@RequestParam String phone, 
+    public String edit(@RequestParam String phone,
                       @RequestParam String keywordPref,
-                      HttpSession session, 
+                      @RequestParam(required = false) String nickname,
+                      HttpSession session,
                       RedirectAttributes redirectAttributes) {
         Long userId = (Long) session.getAttribute("userId");
         if (userId == null) {
             return "redirect:/user/login";
         }
-        
+
         try {
-            userService.updateUser(userId, phone, keywordPref);
+            userService.updateUser(userId, phone, keywordPref, nickname);
             redirectAttributes.addFlashAttribute("message", "회원정보가 수정되었습니다.");
             return "redirect:/user/mypage";
         } catch (Exception e) {

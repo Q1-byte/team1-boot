@@ -11,4 +11,5 @@ public class ProfileUpdateRequestDto {
 
     private String phone;
     private String keywordPref;
+    private String nickname;
 }

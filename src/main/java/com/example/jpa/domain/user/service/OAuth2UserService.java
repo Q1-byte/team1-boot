@@ -49,16 +49,12 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
                 email = tempEmail;
             }
 
-            name = profile != null ? (String) profile.get("nickname") : null;
-            if (name == null) {
-                throw new OAuth2AuthenticationException("카카오 사용자 정보가 부족합니다.");
-            }
+            String rawNickname = profile != null ? (String) profile.get("nickname") : null;
+            name = (rawNickname != null && !rawNickname.isBlank()) ? rawNickname : email.split("@")[0];
         } else {
             email = (String) attributes.get("email");
-            name = (String) attributes.get("name");
-            if (name == null) {
-                throw new OAuth2AuthenticationException("사용자 정보가 부족합니다.");
-            }
+            String rawName = (String) attributes.get("name");
+            name = (rawName != null && !rawName.isBlank()) ? rawName : email.split("@")[0];
         }
 
         log.info("OAuth2 로그인: provider={}, email={}, name={}", provider, email, name);
@@ -88,6 +84,7 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
 
         User newUser = User.builder()
                 .username(username)
+                .nickname(name)
                 .password("") // OAuth 사용자는 비밀번호 없음
                 .email(email)
                 .role("USER")

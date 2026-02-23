@@ -87,11 +87,11 @@ public class MyPageService {
     }
 
     /**
-     * 프로필 수정 (연락처, 여행성향)
+     * 프로필 수정 (연락처, 여행성향, 닉네임)
      */
     @Transactional
     public UserResponseDto updateProfile(Long userId, ProfileUpdateRequestDto requestDto) {
-        return userService.updateUser(userId, requestDto.getPhone(), requestDto.getKeywordPref());
+        return userService.updateUser(userId, requestDto.getPhone(), requestDto.getKeywordPref(), requestDto.getNickname());
     }
 
     /**

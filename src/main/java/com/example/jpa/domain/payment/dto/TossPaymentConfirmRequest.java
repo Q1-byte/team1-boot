@@ -10,4 +10,6 @@ public class TossPaymentConfirmRequest {
     private String orderId;    // 우리가 만든 주문번호 (UUID)
     private Long amount;       // 결제 금액
     private Long planId;       // 결제할 여행 계획 ID
+    private Long userId;       // 결제 사용자 ID (포인트 적립용)
+    private Integer usePoint;  // 사용할 포인트 (기본값 0)
 }

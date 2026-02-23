@@ -108,17 +108,20 @@ public class UserService {
      * 사용자 정보 수정
      */
     @Transactional
-    public UserResponseDto updateUser(Long id, String phone, String keywordPref) {
+    public UserResponseDto updateUser(Long id, String phone, String keywordPref, String nickname) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("해당 회원이 존재하지 않습니다."));
-        
+
         if (phone != null) {
             user.setPhone(phone);
         }
         if (keywordPref != null) {
             user.setKeywordPref(keywordPref);
         }
-        
+        if (nickname != null && !nickname.isBlank()) {
+            user.setNickname(nickname);
+        }
+
         return UserResponseDto.fromEntity(user);
     }
     
