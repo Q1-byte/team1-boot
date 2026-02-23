@@ -10,6 +10,7 @@ import java.util.List;
 public class SavePlanRequestDto {
 
     private Long userId;
+    private Long regionId;
     private String regionName;
     private String startDate;   // "YYYY-MM-DD"
     private String endDate;     // "YYYY-MM-DD"

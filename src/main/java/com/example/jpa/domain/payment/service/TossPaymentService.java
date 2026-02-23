@@ -4,6 +4,9 @@ import com.example.jpa.domain.payment.dto.TossPaymentConfirmRequest;
 import com.example.jpa.domain.payment.entity.Payment;
 import com.example.jpa.domain.payment.repository.PaymentRepository;
 import com.example.jpa.domain.plan.repository.TravelPlanRepository;
+import com.example.jpa.domain.point.entity.Point;
+import com.example.jpa.domain.point.repository.PointRepository;
+import com.example.jpa.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -19,6 +22,8 @@ public class TossPaymentService {
 
     private final PaymentRepository paymentRepository;
     private final TravelPlanRepository travelPlanRepository;
+    private final UserRepository userRepository;
+    private final PointRepository pointRepository;
     private final String TOSS_SECRET_KEY = "test_sk_GjLJoQ1aVZp9PZn7m5YJ8w6KYe2R";
 
     @Transactional
@@ -54,6 +59,7 @@ public class TossPaymentService {
 
             if ("가상계좌".equals(method)) {
                 payment.updateStatus("WAITING_FOR_DEPOSIT", request.getPaymentKey());
+                body.put("earnedPoint", 0);
             } else {
                 payment.updateStatus("COMPLETED", request.getPaymentKey());
 
@@ -65,6 +71,35 @@ public class TossPaymentService {
                                 plan.setTotalPrice(payment.getTotalAmount());
                             });
                 }
+
+                // 포인트 차감 및 적립
+                Long userId = payment.getUserId() != null ? payment.getUserId() : request.getUserId();
+                int usePoint = request.getUsePoint() != null ? request.getUsePoint() : 0;
+                int earnedPoint = (int) (payment.getTotalAmount() * 0.005);
+                if (userId != null) {
+                    userRepository.findById(userId).ifPresent(user -> {
+                        // 포인트 차감
+                        if (usePoint > 0) {
+                            int actualUsePoint = Math.min(usePoint, user.getPoint());
+                            user.setPoint(user.getPoint() - actualUsePoint);
+                            pointRepository.save(Point.builder()
+                                    .userId(user.getId())
+                                    .amount(-actualUsePoint)
+                                    .description("결제 포인트 사용")
+                                    .build());
+                        }
+                        // 포인트 적립 (실결제금액의 1%)
+                        if (earnedPoint > 0) {
+                            user.setPoint(user.getPoint() + earnedPoint);
+                            pointRepository.save(Point.builder()
+                                    .userId(user.getId())
+                                    .amount(earnedPoint)
+                                    .description("결제 포인트 적립 (결제금액: " + payment.getTotalAmount() + "원)")
+                                    .build());
+                        }
+                    });
+                }
+                body.put("earnedPoint", earnedPoint);
             }
 
             paymentRepository.save(payment);

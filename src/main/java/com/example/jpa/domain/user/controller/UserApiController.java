@@ -96,9 +96,10 @@ public class UserApiController {
     public ResponseEntity<ApiResponse<UserResponseDto>> updateUser(
             @PathVariable Long id,
             @RequestParam(required = false) String phone,
-            @RequestParam(required = false) String keywordPref) {
+            @RequestParam(required = false) String keywordPref,
+            @RequestParam(required = false) String nickname) {
         try {
-            UserResponseDto user = userService.updateUser(id, phone, keywordPref);
+            UserResponseDto user = userService.updateUser(id, phone, keywordPref, nickname);
             return ResponseEntity.ok(ApiResponse.success("회원정보가 수정되었습니다.", user));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
