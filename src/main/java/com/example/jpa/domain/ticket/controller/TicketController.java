@@ -19,11 +19,22 @@ public class TicketController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<TicketDto>>> getAll(
             @RequestParam(required = false) Long regionId,
-            @RequestParam(required = false) String category) {
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) Integer maxPrice) {
 
         List<TicketDto> list;
 
-        if (regionId != null && category != null) {
+        if (regionId != null && maxPrice != null && category != null) {
+            // 지역 + 가격 + 카테고리 필터
+            list = ticketService.findByRegionAndMaxPrice(regionId, maxPrice)
+                    .stream()
+                    .filter(t -> t.getCategory().equals(category))
+                    .map(TicketDto::fromEntity).toList();
+        } else if (regionId != null && maxPrice != null) {
+            // 지역 + 가격 필터
+            list = ticketService.findByRegionAndMaxPrice(regionId, maxPrice)
+                    .stream().map(TicketDto::fromEntity).toList();
+        } else if (regionId != null && category != null) {
             list = ticketService.findByRegionAndCategory(regionId, category)
                     .stream().map(TicketDto::fromEntity).toList();
         } else if (regionId != null) {
