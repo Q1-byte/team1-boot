@@ -87,7 +87,8 @@ public class PlanService {
         List<PlanSpot> planSpots = planSpotRepository.findByPlanIdOrderByDayAsc(planId);
         for (PlanSpot ps : planSpots) {
             String key = "Day " + ps.getDay();
-            travelSpotRepository.findById(ps.getSpotId())
+            // ✅ findByIdWithKeywords: spotKeywords JOIN FETCH로 Lazy 직렬화 문제 방지
+            travelSpotRepository.findByIdWithKeywords(ps.getSpotId())
                     .ifPresent(spot -> schedule.computeIfAbsent(key, k -> new ArrayList<>()).add(spot));
         }
 
@@ -151,8 +152,10 @@ public class PlanService {
      */
     public TravelPlanResponseDto createPlan(List<String> keywords, String region) {
         // 1. 카테고리별 데이터 가져오기 (식당 39, 관광지 14/12/28)
-        List<TravelSpot> allRestaurants = new ArrayList<>(travelSpotRepository.findAllByKeywordsAndCategory(keywords, "39"));
-        List<TravelSpot> attractions = new ArrayList<>(travelSpotRepository.findAllByKeywordsAndCategory(keywords, "14"));
+        List<TravelSpot> allRestaurants = new ArrayList<>(
+                travelSpotRepository.findAllByKeywordsAndCategory(keywords, "39"));
+        List<TravelSpot> attractions = new ArrayList<>(
+                travelSpotRepository.findAllByKeywordsAndCategory(keywords, "14"));
 
         // 관광지 데이터 보강 (12번, 28번도 있다면 추가)
         attractions.addAll(travelSpotRepository.findAllByKeywordsAndCategory(keywords, "12"));
@@ -160,8 +163,10 @@ public class PlanService {
 
         // 2. 지역 필터링
         if (region != null && !region.isEmpty()) {
-            allRestaurants = allRestaurants.stream().filter(s -> s.getAddress().contains(region)).collect(Collectors.toCollection(ArrayList::new));
-            attractions = attractions.stream().filter(s -> s.getAddress().contains(region)).collect(Collectors.toCollection(ArrayList::new));
+            allRestaurants = allRestaurants.stream().filter(s -> s.getAddress().contains(region))
+                    .collect(Collectors.toCollection(ArrayList::new));
+            attractions = attractions.stream().filter(s -> s.getAddress().contains(region))
+                    .collect(Collectors.toCollection(ArrayList::new));
 
             // 3. 키워드 매칭으로 부족하면 같은 지역 전체에서 보충
             final int MIN_RESTAURANTS = 8;
@@ -172,7 +177,8 @@ public class PlanService {
                 List<TravelSpot> fallbackRestaurants = travelSpotRepository.findByCategoryAndRegion("39", region)
                         .stream().filter(s -> !existingIds.contains(s.getId())).collect(Collectors.toList());
                 Collections.shuffle(fallbackRestaurants);
-                allRestaurants.addAll(fallbackRestaurants.subList(0, Math.min(fallbackRestaurants.size(), MIN_RESTAURANTS - allRestaurants.size())));
+                allRestaurants.addAll(fallbackRestaurants.subList(0,
+                        Math.min(fallbackRestaurants.size(), MIN_RESTAURANTS - allRestaurants.size())));
             }
 
             if (attractions.size() < MIN_ATTRACTIONS) {
@@ -181,9 +187,11 @@ public class PlanService {
                 for (String cat : Arrays.asList("14", "12", "28")) {
                     fallbackAttractions.addAll(travelSpotRepository.findByCategoryAndRegion(cat, region));
                 }
-                fallbackAttractions = fallbackAttractions.stream().filter(s -> !existingIds.contains(s.getId())).collect(Collectors.toList());
+                fallbackAttractions = fallbackAttractions.stream().filter(s -> !existingIds.contains(s.getId()))
+                        .collect(Collectors.toList());
                 Collections.shuffle(fallbackAttractions);
-                attractions.addAll(fallbackAttractions.subList(0, Math.min(fallbackAttractions.size(), MIN_ATTRACTIONS - attractions.size())));
+                attractions.addAll(fallbackAttractions.subList(0,
+                        Math.min(fallbackAttractions.size(), MIN_ATTRACTIONS - attractions.size())));
             }
         }
 
@@ -207,28 +215,28 @@ public class PlanService {
 
         // 📅 Day 1: 점심 -> 관광지 -> 카페 -> 저녁 -> 야경(관광지)
         List<TravelSpot> day1 = new ArrayList<>();
-        addSpot(day1, restaurants);   // 점심
-        addSpot(day1, attractions);   // 관광지
-        addSpot(day1, cafes);         // 카페
-        addSpot(day1, restaurants);   // 저녁
-        addSpot(day1, attractions);   // 야경
+        addSpot(day1, restaurants); // 점심
+        addSpot(day1, attractions); // 관광지
+        addSpot(day1, cafes); // 카페
+        addSpot(day1, restaurants); // 저녁
+        addSpot(day1, attractions); // 야경
         schedule.put("Day 1", sortByLocation(day1));
 
         // 📅 Day 2: 아침 -> 관광지1 -> 점심 -> 관광지2 -> 관광지3 -> 저녁 -> 야경(관광지)
         List<TravelSpot> day2 = new ArrayList<>();
-        addSpot(day2, restaurants);   // 아침
-        addSpot(day2, attractions);   // 관광지1
-        addSpot(day2, restaurants);   // 점심
-        addSpot(day2, attractions);   // 관광지2
-        addSpot(day2, attractions);   // 관광지3
-        addSpot(day2, restaurants);   // 저녁
-        addSpot(day2, attractions);   // 야경
+        addSpot(day2, restaurants); // 아침
+        addSpot(day2, attractions); // 관광지1
+        addSpot(day2, restaurants); // 점심
+        addSpot(day2, attractions); // 관광지2
+        addSpot(day2, attractions); // 관광지3
+        addSpot(day2, restaurants); // 저녁
+        addSpot(day2, attractions); // 야경
         schedule.put("Day 2", sortByLocation(day2));
 
         // 📅 Day 3: 아침 -> 체크아웃 -> 관광지
         List<TravelSpot> day3 = new ArrayList<>();
-        addSpot(day3, restaurants);   // 아침
-        addSpot(day3, attractions);   // 마지막 관광지
+        addSpot(day3, restaurants); // 아침
+        addSpot(day3, attractions); // 마지막 관광지
         schedule.put("Day 3", sortByLocation(day3));
 
         return TravelPlanResponseDto.builder()
@@ -251,7 +259,8 @@ public class PlanService {
      * 📍 Nearest Neighbor 알고리즘을 이용한 동선 정렬
      */
     private List<TravelSpot> sortByLocation(List<TravelSpot> spots) {
-        if (spots.size() <= 1) return spots;
+        if (spots.size() <= 1)
+            return spots;
 
         List<TravelSpot> sorted = new ArrayList<>();
         sorted.add(spots.remove(0));
@@ -273,7 +282,8 @@ public class PlanService {
      */
     private double calculateDistance(TravelSpot s1, TravelSpot s2) {
         if (s1.getMapy() == null || s2.getMapy() == null ||
-                s1.getMapx() == null || s2.getMapx() == null) return 0;
+                s1.getMapx() == null || s2.getMapx() == null)
+            return 0;
 
         double latDiff = s1.getMapy() - s2.getMapy();
         double lonDiff = s1.getMapx() - s2.getMapx();

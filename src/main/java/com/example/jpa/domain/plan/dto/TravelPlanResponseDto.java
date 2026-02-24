@@ -41,7 +41,8 @@ public class TravelPlanResponseDto {
      * 빌더 에러 방지를 위해 수동 생성 방식을 사용합니다.
      */
     public static TravelPlanResponseDto fromEntity(Plan plan) {
-        if (plan == null) return null;
+        if (plan == null)
+            return null;
         TravelPlanResponseDto dto = new TravelPlanResponseDto();
         dto.setId(plan.getId());
         dto.setTitle(plan.getName());
@@ -56,7 +57,8 @@ public class TravelPlanResponseDto {
      * MyPageService의 에러를 해결합니다.
      */
     public static TravelPlanResponseDto fromEntity(TravelPlan plan) {
-        if (plan == null) return null;
+        if (plan == null)
+            return null;
         TravelPlanResponseDto dto = new TravelPlanResponseDto();
         dto.setId(plan.getId());
         dto.setType(plan.getType());
@@ -72,6 +74,10 @@ public class TravelPlanResponseDto {
         dto.setTotalPrice(plan.getTotalPrice());
         dto.setStatus(plan.getStatus());
         dto.setCreatedAt(plan.getCreatedAt());
+        // title에서 지역명 추출 ("전남 AI 맞춤 여행 일정" → "전남")
+        if (plan.getTitle() != null && plan.getTitle().contains(" ")) {
+            dto.setRegion(plan.getTitle().split(" ")[0]);
+        }
         return dto;
     }
 }
