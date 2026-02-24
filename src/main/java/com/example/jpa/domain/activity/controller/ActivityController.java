@@ -19,11 +19,22 @@ public class ActivityController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<ActivityDto>>> getAll(
             @RequestParam(required = false) Long regionId,
-            @RequestParam(required = false) String category) {
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) Integer maxPrice) {
 
         List<ActivityDto> list;
 
-        if (regionId != null && category != null) {
+        if (regionId != null && maxPrice != null && category != null) {
+            // 지역 + 가격 + 카테고리 필터
+            list = activityService.findByRegionAndMaxPrice(regionId, maxPrice)
+                    .stream()
+                    .filter(a -> a.getCategory().equals(category))
+                    .map(ActivityDto::fromEntity).toList();
+        } else if (regionId != null && maxPrice != null) {
+            // 지역 + 가격 필터
+            list = activityService.findByRegionAndMaxPrice(regionId, maxPrice)
+                    .stream().map(ActivityDto::fromEntity).toList();
+        } else if (regionId != null && category != null) {
             list = activityService.findByRegionAndCategory(regionId, category)
                     .stream().map(ActivityDto::fromEntity).toList();
         } else if (regionId != null) {

@@ -19,11 +19,22 @@ public class AccommodationController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<AccommodationDto>>> getAll(
             @RequestParam(required = false) Long regionId,
-            @RequestParam(required = false) String type) {
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) Integer maxPrice) {
 
         List<AccommodationDto> list;
 
-        if (regionId != null && type != null) {
+        if (regionId != null && maxPrice != null && type != null) {
+            // 지역 + 가격 + 타입 필터
+            list = accommodationService.findByRegionAndType(regionId, type)
+                    .stream()
+                    .filter(a -> a.getPricePerNight() <= maxPrice)
+                    .map(AccommodationDto::fromEntity).toList();
+        } else if (regionId != null && maxPrice != null) {
+            // 지역 + 가격 필터 (0원 ~ maxPrice)
+            list = accommodationService.findByRegionAndPrice(regionId, 0, maxPrice)
+                    .stream().map(AccommodationDto::fromEntity).toList();
+        } else if (regionId != null && type != null) {
             list = accommodationService.findByRegionAndType(regionId, type)
                     .stream().map(AccommodationDto::fromEntity).toList();
         } else if (regionId != null) {
