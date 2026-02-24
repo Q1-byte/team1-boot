@@ -125,6 +125,24 @@ public class UserApiController {
     }
     
     /**
+     * 신규 회원 웰컴 포인트 지급 API (1회 한정)
+     */
+    @PostMapping("/welcome-bonus")
+    public ResponseEntity<ApiResponse<Integer>> claimWelcomeBonus(HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.unauthorized("로그인이 필요합니다."));
+        }
+        try {
+            int newPoint = userService.claimWelcomeBonus(userId);
+            return ResponseEntity.ok(ApiResponse.success("가입 축하 포인트 1,000P가 지급되었습니다.", newPoint));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.badRequest(e.getMessage()));
+        }
+    }
+
+    /**
      * 회원 탈퇴 API
      */
     @DeleteMapping("/{id}")

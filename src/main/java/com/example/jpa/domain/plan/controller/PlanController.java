@@ -53,19 +53,13 @@ public class PlanController {
         return ResponseEntity.ok(planService.saveTravelPlan(request, userId));
     }
 
-    // 저장된 계획 단건 조회 + 조회 기록 저장
+    // 저장된 계획 단건 조회
     @GetMapping("/{planId}")
     public ResponseEntity<?> getPlan(
             @PathVariable Long planId,
             @RequestParam(required = false) Long userId,
             HttpSession session) {
         try {
-            // 조회 기록 저장 (세션 우선, 없으면 파라미터)
-            Long resolvedUserId = (Long) session.getAttribute("userId");
-            if (resolvedUserId == null) resolvedUserId = userId;
-            if (resolvedUserId != null) {
-                viewHistoryService.saveViewHistory(resolvedUserId, planId);
-            }
             return ResponseEntity.ok(planService.getTravelPlan(planId));
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(404).body(e.getMessage());
@@ -85,10 +79,14 @@ public class PlanController {
 
     // 조회 기록 저장
     @PostMapping("/{planId}/view")
-    public ResponseEntity<Void> recordView(@PathVariable Long planId, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId != null) {
-            viewHistoryService.saveViewHistory(userId, planId);
+    public ResponseEntity<Void> recordView(
+            @PathVariable Long planId,
+            @RequestParam(required = false) Long userId,
+            HttpSession session) {
+        Long resolvedUserId = (Long) session.getAttribute("userId");
+        if (resolvedUserId == null) resolvedUserId = userId;
+        if (resolvedUserId != null) {
+            viewHistoryService.saveViewHistory(resolvedUserId, planId);
         }
         return ResponseEntity.ok().build();
     }

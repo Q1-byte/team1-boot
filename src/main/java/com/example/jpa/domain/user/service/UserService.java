@@ -1,5 +1,7 @@
 package com.example.jpa.domain.user.service;
 
+import com.example.jpa.domain.point.entity.Point;
+import com.example.jpa.domain.point.repository.PointRepository;
 import com.example.jpa.domain.user.dto.LoginRequestDto;
 import com.example.jpa.domain.user.dto.SignupRequestDto;
 import com.example.jpa.domain.user.dto.UserResponseDto;
@@ -25,6 +27,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PointRepository pointRepository;
     
     /**
      * 회원가입
@@ -74,6 +77,11 @@ public class UserService {
         // 비밀번호 검증
         if (!passwordEncoder.matches(requestDto.getPassword(), user.getPassword())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+        }
+
+        // 사용중지 계정 차단
+        if ("SUSPENDED".equals(user.getStatus())) {
+            throw new IllegalArgumentException("사용이 중지된 계정입니다. 관리자에게 문의하세요.");
         }
         
         log.info("로그인 성공: {}", user.getUsername());
@@ -185,6 +193,25 @@ public class UserService {
                 .orElseThrow(() -> new NoSuchElementException("해당 회원이 존재하지 않습니다."));
         user.setPoint(point);
         return UserResponseDto.fromEntity(user);
+    }
+
+    /**
+     * 신규 회원 웰컴 포인트 지급 (1회 한정)
+     */
+    @Transactional
+    public int claimWelcomeBonus(Long userId) {
+        if (pointRepository.existsByUserIdAndDescription(userId, "가입 축하 포인트")) {
+            throw new IllegalStateException("이미 웰컴 포인트를 받으셨습니다.");
+        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("해당 회원이 존재하지 않습니다."));
+        user.setPoint((user.getPoint() == null ? 0 : user.getPoint()) + 1000);
+        pointRepository.save(Point.builder()
+                .userId(userId)
+                .amount(1000)
+                .description("가입 축하 포인트")
+                .build());
+        return user.getPoint();
     }
 
     /**
