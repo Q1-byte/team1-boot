@@ -51,6 +51,16 @@ public class Payment {
     public void updateStatus(String status, String paymentKey) {
         this.status = status;
         this.paymentKey = paymentKey;
-        this.approvedAt = LocalDateTime.now(); // 승인 시간도 함께 기록하면 좋습니다.
+        this.approvedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 새로 만든 3개짜리 메서드 (토스 승인 시 결제 수단 저장용)
+     */
+    public void updateStatus(String status, String paymentKey, String paymentMethod) {
+        this.status = status;
+        this.paymentKey = paymentKey;
+        this.paymentMethod = paymentMethod;
+        this.approvedAt = LocalDateTime.now();
     }
 }
