@@ -66,6 +66,25 @@ public class PlanController {
         }
     }
 
+    // 저장된 계획의 스팟 목록 교체
+    @PutMapping("/{planId}/spots")
+    public ResponseEntity<String> updatePlanSpots(
+            @PathVariable Long planId,
+            @RequestBody SpotsUpdateRequest request) {
+        try {
+            planService.updatePlanSpots(planId, request.getSpots());
+            return ResponseEntity.ok("스팟 업데이트 완료");
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(404).body(e.getMessage());
+        }
+    }
+
+    @lombok.Getter
+    @lombok.Setter
+    public static class SpotsUpdateRequest {
+        private List<SavePlanRequestDto.SpotEntry> spots;
+    }
+
     // 계획 삭제
     @DeleteMapping("/{planId}")
     public ResponseEntity<String> deletePlan(@PathVariable Long planId) {

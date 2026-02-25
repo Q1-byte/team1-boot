@@ -64,6 +64,27 @@ public class PlanService {
     }
 
     /**
+     * [사용자용] 저장된 계획의 스팟 목록 교체 (PUT /plans/{id}/spots)
+     * 기존 plan_spot 레코드를 모두 삭제하고 새 목록으로 재저장합니다.
+     */
+    @Transactional
+    public void updatePlanSpots(Long planId, List<SavePlanRequestDto.SpotEntry> spots) {
+        if (!travelPlanRepository.existsById(planId)) {
+            throw new NoSuchElementException("해당 계획이 존재하지 않습니다. id=" + planId);
+        }
+        planSpotRepository.deleteByPlanId(planId);
+        if (spots != null) {
+            for (SavePlanRequestDto.SpotEntry entry : spots) {
+                planSpotRepository.save(PlanSpot.builder()
+                        .planId(planId)
+                        .spotId(entry.getSpotId())
+                        .day(entry.getDay())
+                        .build());
+            }
+        }
+    }
+
+    /**
      * [사용자용] 계획 삭제
      */
     @Transactional

@@ -182,6 +182,7 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("해당 회원이 존재하지 않습니다."));
         user.setStatus(status);
+        userRepository.save(user);
     }
 
     /**
