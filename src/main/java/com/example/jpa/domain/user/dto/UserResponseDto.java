@@ -18,10 +18,11 @@ public class UserResponseDto {
     private String email;
     private String phone;
     private String role;
+    private String status;
     private String keywordPref;
     private Integer point;
     private LocalDateTime createdAt;
-    
+
     // Entity -> DTO 변환
     public static UserResponseDto fromEntity(User user) {
         return UserResponseDto.builder()
@@ -31,6 +32,7 @@ public class UserResponseDto {
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .role(user.getRole())
+                .status(user.getStatus())
                 .keywordPref(user.getKeywordPref())
                 .point(user.getPoint())
                 .createdAt(user.getCreatedAt())
