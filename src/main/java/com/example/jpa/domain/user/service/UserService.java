@@ -6,6 +6,7 @@ import com.example.jpa.domain.user.dto.LoginRequestDto;
 import com.example.jpa.domain.user.dto.SignupRequestDto;
 import com.example.jpa.domain.user.dto.UserResponseDto;
 import com.example.jpa.domain.user.entity.User;
+import com.example.jpa.domain.user.entity.UserStatus;
 import com.example.jpa.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -80,7 +81,7 @@ public class UserService {
         }
 
         // 사용중지 계정 차단
-        if ("SUSPENDED".equals(user.getStatus())) {
+        if (UserStatus.SUSPENDED == user.getStatus()) {
             throw new IllegalArgumentException("사용이 중지된 계정입니다. 관리자에게 문의하세요.");
         }
         
@@ -181,7 +182,7 @@ public class UserService {
     public void updateStatus(Long id, String status) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("해당 회원이 존재하지 않습니다."));
-        user.setStatus(status);
+        user.setStatus(UserStatus.valueOf(status));
         userRepository.save(user);
     }
 

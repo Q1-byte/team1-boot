@@ -72,7 +72,7 @@ public class TravelPlanResponseDto {
         dto.setTravelDate(plan.getTravelDate());
         dto.setDurationDays(plan.getDurationDays());
         dto.setTotalPrice(plan.getTotalPrice());
-        dto.setStatus(plan.getStatus());
+        dto.setStatus(plan.getStatus() != null ? plan.getStatus().name() : null);
         dto.setCreatedAt(plan.getCreatedAt());
         // title에서 지역명 추출 ("전남 AI 맞춤 여행 일정" → "전남")
         if (plan.getTitle() != null && plan.getTitle().contains(" ")) {

@@ -5,6 +5,8 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import static jakarta.persistence.EnumType.STRING;
+
 import java.time.LocalDateTime;
 
 @Getter
@@ -40,9 +42,9 @@ public class User {
     @Builder.Default
     private String role = "USER";
 
-    @Column(length = 20)
+    @Enumerated(STRING)
     @Builder.Default
-    private String status = "ACTIVE";
+    private UserStatus status = UserStatus.ACTIVE;
 
     @Column(name = "keyword_pref", length = 200)
     private String keywordPref;

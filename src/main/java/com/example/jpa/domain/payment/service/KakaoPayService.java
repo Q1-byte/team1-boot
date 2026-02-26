@@ -2,12 +2,12 @@ package com.example.jpa.domain.payment.service;
 
 import com.example.jpa.domain.payment.dto.KakaoPayReadyResponse;
 import com.example.jpa.domain.payment.entity.Payment;
+import com.example.jpa.domain.payment.entity.PaymentStatus;
 import com.example.jpa.domain.payment.repository.PaymentRepository;
 import com.example.jpa.domain.plan.entity.TravelPlan;
+import com.example.jpa.domain.plan.entity.TravelPlanStatus;
 import com.example.jpa.domain.plan.repository.TravelPlanRepository;
-import com.example.jpa.domain.point.entity.Point;
-import com.example.jpa.domain.point.repository.PointRepository;
-import com.example.jpa.domain.user.repository.UserRepository;
+import com.example.jpa.domain.point.service.PointService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -29,8 +29,7 @@ public class KakaoPayService {
 
     private final PaymentRepository paymentRepository;
     private final TravelPlanRepository travelPlanRepository;
-    private final UserRepository userRepository;
-    private final PointRepository pointRepository;
+    private final PointService pointService;
 
     @Value("${kakao.admin-key}")
     private String KAKAO_ADMIN_KEY;
@@ -91,7 +90,7 @@ public class KakaoPayService {
                     .planId(planId)
                     .totalAmount(Integer.parseInt(totalAmount))
                     .itemName(itemName)
-                    .status("READY")
+                    .status(PaymentStatus.READY)
                     .createdAt(LocalDateTime.now())
                     .build();
 
@@ -134,40 +133,27 @@ public class KakaoPayService {
 
         // 3. 결제 상태 업데이트 (Dirty Checking 활용)
         if (response != null) {
-            paymentInfo.updateStatus("COMPLETED", tid);
+            paymentInfo.updateStatus(PaymentStatus.COMPLETED, tid);
 
             // 4. TravelPlan 상태 PAID + totalPrice 업데이트
             if (paymentInfo.getPlanId() != null) {
                 travelPlanRepository.findById(paymentInfo.getPlanId())
                         .ifPresent(plan -> {
-                            plan.setStatus("PAID");
+                            plan.setStatus(TravelPlanStatus.PAID);
                             plan.setTotalPrice(paymentInfo.getTotalAmount());
                         });
             }
 
             // 5. 포인트 차감 및 적립
             int earnedPoint = (int) (paymentInfo.getTotalAmount() * 0.005);
-            userRepository.findById(paymentInfo.getUserId()).ifPresent(user -> {
-                // 포인트 차감
-                if (usePoint > 0) {
-                    int actualUsePoint = Math.min(usePoint, user.getPoint());
-                    user.setPoint(user.getPoint() - actualUsePoint);
-                    pointRepository.save(Point.builder()
-                            .userId(user.getId())
-                            .amount(-actualUsePoint)
-                            .description("결제 포인트 사용")
-                            .build());
-                }
-                // 포인트 적립 (실결제금액의 1%)
-                if (earnedPoint > 0) {
-                    user.setPoint(user.getPoint() + earnedPoint);
-                    pointRepository.save(Point.builder()
-                            .userId(user.getId())
-                            .amount(earnedPoint)
-                            .description("결제 포인트 적립 (결제금액: " + paymentInfo.getTotalAmount() + "원)")
-                            .build());
-                }
-            });
+            Long userId = paymentInfo.getUserId();
+            if (usePoint > 0) {
+                pointService.usePoints(userId, usePoint, "결제 포인트 사용");
+            }
+            if (earnedPoint > 0) {
+                pointService.earnPoints(userId, earnedPoint,
+                        "결제 포인트 적립 (결제금액: " + paymentInfo.getTotalAmount() + "원)");
+            }
 
             Map<String, Object> result = new HashMap<>();
             result.put("result", "success");

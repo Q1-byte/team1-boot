@@ -3,12 +3,12 @@ package com.example.jpa.domain.payment.service;
 import com.example.jpa.domain.history.service.HistoryService;
 import com.example.jpa.domain.payment.dto.PaymentDto;
 import com.example.jpa.domain.payment.entity.Payment;
+import com.example.jpa.domain.payment.entity.PaymentStatus;
 import com.example.jpa.domain.payment.repository.PaymentRepository;
 import com.example.jpa.domain.plan.entity.TravelPlan;
+import com.example.jpa.domain.plan.entity.TravelPlanStatus;
 import com.example.jpa.domain.plan.repository.TravelPlanRepository;
-import com.example.jpa.domain.point.entity.Point;
-import com.example.jpa.domain.point.repository.PointRepository;
-import com.example.jpa.domain.user.repository.UserRepository;
+import com.example.jpa.domain.point.service.PointService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,16 +26,13 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final HistoryService historyService;
-    private final UserRepository userRepository;
     private final TravelPlanRepository travelPlanRepository;
-    private final PointRepository pointRepository;
+    private final PointService pointService;
 
     // 어드민 결제 내역 조회 (페이징 + status 필터)
     public Page<PaymentDto.AdminResponse> getPaymentList(String status, Pageable pageable) {
-        return paymentRepository.searchPayments(
-                (status != null && !status.isBlank()) ? status : null,
-                pageable
-        ).map(this::toAdminResponse);
+        PaymentStatus statusEnum = (status != null && !status.isBlank()) ? PaymentStatus.valueOf(status) : null;
+        return paymentRepository.searchPayments(statusEnum, pageable).map(this::toAdminResponse);
     }
 
     private PaymentDto.AdminResponse toAdminResponse(Payment payment) {
@@ -45,7 +42,7 @@ public class PaymentService {
                 .planTitle(payment.getItemName())
                 .amount(payment.getTotalAmount())
                 .paymentMethod(payment.getPaymentMethod())
-                .status(payment.getStatus())
+                .status(payment.getStatus() != null ? payment.getStatus().name() : null)
                 .paidAt(payment.getApprovedAt())
                 .build();
     }
@@ -63,28 +60,13 @@ public class PaymentService {
      */
     @Transactional
     public void pointOnlyPayment(Long userId, Long planId, Integer usePoints) {
-        // 1. 유저 조회 및 포인트 잔액 확인
-        var user = userRepository.findById(userId)
-                .orElseThrow(() -> new NoSuchElementException("해당 회원이 존재하지 않습니다. id=" + userId));
-
-        if (user.getPoint() == null || user.getPoint() < usePoints) {
-            throw new IllegalArgumentException("포인트가 부족합니다. 보유: " + (user.getPoint() == null ? 0 : user.getPoint()) + "P, 필요: " + usePoints + "P");
-        }
-
-        // 2. 포인트 차감
-        user.setPoint(user.getPoint() - usePoints);
-        userRepository.save(user);
-
-        pointRepository.save(Point.builder()
-                .userId(userId)
-                .amount(-usePoints)
-                .description("포인트 전액 결제")
-                .build());
+        // 1. 포인트 차감 (잔액 확인 및 유저 조회는 PointService에서 처리)
+        pointService.usePoints(userId, usePoints, "포인트 전액 결제");
 
         // 3. 플랜 상태 READY → PAID
         TravelPlan plan = travelPlanRepository.findById(planId)
                 .orElseThrow(() -> new NoSuchElementException("해당 플랜이 존재하지 않습니다. id=" + planId));
-        plan.setStatus("PAID");
+        plan.setStatus(TravelPlanStatus.PAID);
         plan.setTotalPrice(0);
         travelPlanRepository.save(plan);
 
@@ -97,7 +79,7 @@ public class PaymentService {
                 .totalAmount(0)
                 .itemName("포인트 전액 결제")
                 .paymentMethod("POINT")
-                .status("COMPLETED")
+                .status(PaymentStatus.COMPLETED)
                 .createdAt(LocalDateTime.now())
                 .approvedAt(LocalDateTime.now())
                 .build());
@@ -109,7 +91,7 @@ public class PaymentService {
         Payment payment = paymentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 결제 내역이 없습니다. id=" + id));
 
-        payment.updateStatus("CANCELLED", payment.getPaymentKey());
+        payment.updateStatus(PaymentStatus.CANCELLED, payment.getPaymentKey());
 
         // 히스토리 기록
         historyService.log("PAYMENT_CANCEL", "관리자가 결제를 취소함", id.intValue());

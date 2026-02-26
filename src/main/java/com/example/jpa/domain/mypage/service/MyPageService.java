@@ -8,6 +8,7 @@ import com.example.jpa.domain.mypage.dto.PasswordChangeRequestDto;
 import com.example.jpa.domain.mypage.dto.ProfileUpdateRequestDto;
 import com.example.jpa.domain.plan.dto.TravelPlanResponseDto;
 import com.example.jpa.domain.plan.entity.TravelPlan;
+import com.example.jpa.domain.plan.entity.TravelPlanStatus;
 import com.example.jpa.domain.plan.repository.TravelPlanRepository;
 import com.example.jpa.domain.point.dto.PointResponseDto;
 import com.example.jpa.domain.point.repository.PointRepository;
@@ -70,7 +71,7 @@ public class MyPageService {
      * 내 여행 계획 목록 조회
      */
     public List<TravelPlanResponseDto> getMyPlans(Long userId) {
-        return travelPlanRepository.findByUserIdAndStatusNotOrderByCreatedAtDesc(userId, "AI_SAVED")
+        return travelPlanRepository.findByUserIdAndStatusNotOrderByCreatedAtDesc(userId, TravelPlanStatus.AI_SAVED)
                 .stream()
                 .map(TravelPlanResponseDto::fromEntity)
                 .collect(Collectors.toList());

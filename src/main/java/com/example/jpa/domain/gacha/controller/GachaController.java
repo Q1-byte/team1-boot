@@ -19,10 +19,7 @@ public class GachaController {
     public ResponseEntity<GachaResponseDto> drawGacha(
             @RequestParam(value = "level", required = false) Integer level) { // required = false로 테스트
 
-        System.out.println(">>> 컨트롤러 도달 확인! 파라미터 level: " + level);
-
         if (level == null) {
-            System.out.println("❌ level 파라미터가 전달되지 않았습니다!");
             return ResponseEntity.badRequest().build();
         }
 

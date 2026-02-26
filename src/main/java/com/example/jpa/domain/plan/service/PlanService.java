@@ -4,6 +4,7 @@ import com.example.jpa.domain.plan.dto.SavePlanRequestDto;
 import com.example.jpa.domain.plan.dto.TravelPlanResponseDto;
 import com.example.jpa.domain.plan.entity.Plan;
 import com.example.jpa.domain.plan.entity.TravelPlan;
+import com.example.jpa.domain.plan.entity.TravelPlanStatus;
 import com.example.jpa.domain.plan.entity.TravelSpot;
 import com.example.jpa.domain.plan.entity.PlanSpot;
 import com.example.jpa.domain.plan.repository.PlanRepository;
@@ -149,7 +150,7 @@ public class PlanService {
                 .peopleCount(request.getPeopleCount() != null ? request.getPeopleCount() : 1)
                 .travelDate(startDate)
                 .durationDays(durationDays)
-                .status("AI_SAVED")
+                .status(TravelPlanStatus.AI_SAVED)
                 .build();
 
         TravelPlan saved = travelPlanRepository.save(plan);

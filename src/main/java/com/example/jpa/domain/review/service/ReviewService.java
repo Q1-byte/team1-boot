@@ -45,7 +45,6 @@ public class ReviewService {
                     .findFirst() // 첫 번째 이미지 선택
                     .map(ReviewImage::getStoredUrl) // 이미지의 URL 추출
                     .orElse(null); // 이미지가 없으면 null
-            System.out.println("🚩 [로그] 리뷰 ID: " + review.getId() + " | 꺼내온 별점: " + review.getRating());
             return ReviewResponseDto.builder()
                     .id(review.getId())
                     .title(review.getTitle())
@@ -223,9 +222,6 @@ public class ReviewService {
         Page<Review> reviews = reviewRepository.findAll(pageable);
 
         return reviews.map(review -> {
-            System.out.println("==============================");
-            System.out.println("리뷰ID: " + review.getId() + ", 별점: " + review.getRating());
-            System.out.println("==============================");
             String thumbnail = reviewImageRepository.findAllByReviewIdOrderBySortOrderAsc(review.getId())
                     .stream()
                     .findFirst()
