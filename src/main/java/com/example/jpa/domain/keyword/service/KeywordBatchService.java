@@ -12,11 +12,13 @@ import com.example.jpa.domain.plan.repository.TravelSpotRepository;
 import com.example.jpa.domain.ticket.entity.Ticket;
 import com.example.jpa.domain.ticket.repository.TicketRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
+@Log4j2
 @Service
 @RequiredArgsConstructor
 public class KeywordBatchService {
@@ -69,7 +71,7 @@ public class KeywordBatchService {
         // 이미 키워드 매핑이 되어 있으면 스킵
         long spotKeywordCount = keywordRepository.countMappedSpotKeywords();
         if (spotKeywordCount > 0) {
-            System.out.println(">>> 키워드 매핑 데이터가 이미 존재합니다 (" + spotKeywordCount + "건). 배치를 건너뜁니다.");
+            log.info(">>> 키워드 매핑 데이터가 이미 존재합니다 ({}건). 배치를 건너뜁니다.", spotKeywordCount);
             return;
         }
 
@@ -79,7 +81,7 @@ public class KeywordBatchService {
         for (Keyword k : allKeywords) {
             keywordByName.put(k.getName(), k);
         }
-        System.out.println(">>> 로드된 키워드 개수: " + keywordByName.size());
+        log.info(">>> 로드된 키워드 개수: {}", keywordByName.size());
 
         // 2. TravelSpot 키워드 매핑
         categorizeTravelSpots(keywordByName);
@@ -96,7 +98,7 @@ public class KeywordBatchService {
 
     private void categorizeTravelSpots(Map<String, Keyword> keywordByName) {
         List<TravelSpot> allSpots = travelSpotRepository.findAll();
-        System.out.println(">>> TravelSpot 개수: " + allSpots.size());
+        log.info(">>> TravelSpot 개수: {}", allSpots.size());
 
         int successCount = 0;
         int skipCount = 0;
@@ -126,11 +128,11 @@ public class KeywordBatchService {
             if (!matched.isEmpty()) {
                 successCount++;
                 if (successCount % 100 == 0) {
-                    System.out.println(">>> TravelSpot " + successCount + "개 매핑 중...");
+                    log.info(">>> TravelSpot {}개 매핑 중...", successCount);
                 }
             }
         }
-        System.out.println(">>> TravelSpot 매핑 완료: " + successCount + "개 (제외: " + skipCount + "개)");
+        log.info(">>> TravelSpot 매핑 완료: {}개 (제외: {}개)", successCount, skipCount);
     }
 
     private boolean isExcludedSpot(String name, String description) {
@@ -145,7 +147,7 @@ public class KeywordBatchService {
 
     private void categorizeAccommodations(Map<String, Keyword> keywordByName) {
         List<Accommodation> all = accommodationRepository.findAll();
-        System.out.println(">>> Accommodation 개수: " + all.size());
+        log.info(">>> Accommodation 개수: {}", all.size());
 
         int successCount = 0;
         for (Accommodation acc : all) {
@@ -158,17 +160,17 @@ public class KeywordBatchService {
                 acc.setKeywords(String.join(",", matched));
                 successCount++;
                 if (successCount % 100 == 0) {
-                    System.out.println(">>> Accommodation " + successCount + "개 매핑 중...");
+                    log.info(">>> Accommodation {}개 매핑 중...", successCount);
                 }
             }
         }
         accommodationRepository.saveAll(all);
-        System.out.println(">>> Accommodation 매핑 완료: " + successCount + "개");
+        log.info(">>> Accommodation 매핑 완료: {}개", successCount);
     }
 
     private void categorizeActivities(Map<String, Keyword> keywordByName) {
         List<Activity> all = activityRepository.findAll();
-        System.out.println(">>> Activity 개수: " + all.size());
+        log.info(">>> Activity 개수: {}", all.size());
 
         int successCount = 0;
         for (Activity activity : all) {
@@ -181,17 +183,17 @@ public class KeywordBatchService {
                 activity.setKeywords(String.join(",", matched));
                 successCount++;
                 if (successCount % 100 == 0) {
-                    System.out.println(">>> Activity " + successCount + "개 매핑 중...");
+                    log.info(">>> Activity {}개 매핑 중...", successCount);
                 }
             }
         }
         activityRepository.saveAll(all);
-        System.out.println(">>> Activity 매핑 완료: " + successCount + "개");
+        log.info(">>> Activity 매핑 완료: {}개", successCount);
     }
 
     private void categorizeTickets(Map<String, Keyword> keywordByName) {
         List<Ticket> all = ticketRepository.findAll();
-        System.out.println(">>> Ticket 개수: " + all.size());
+        log.info(">>> Ticket 개수: {}", all.size());
 
         int successCount = 0;
         for (Ticket ticket : all) {
@@ -204,12 +206,12 @@ public class KeywordBatchService {
                 ticket.setKeywords(String.join(",", matched));
                 successCount++;
                 if (successCount % 100 == 0) {
-                    System.out.println(">>> Ticket " + successCount + "개 매핑 중...");
+                    log.info(">>> Ticket {}개 매핑 중...", successCount);
                 }
             }
         }
         ticketRepository.saveAll(all);
-        System.out.println(">>> Ticket 매핑 완료: " + successCount + "개");
+        log.info(">>> Ticket 매핑 완료: {}개", successCount);
     }
 
     /**

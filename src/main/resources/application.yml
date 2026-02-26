@@ -51,3 +51,6 @@ api:
 
 kakao:
   admin-key: ${KAKAO_ADMIN_KEY:}
+
+toss:
+  secret-key: ${TOSS_SECRET_KEY:}

@@ -10,6 +10,7 @@ import com.example.jpa.domain.plan.dto.RandomMatchRequestDto;
 import com.example.jpa.domain.plan.dto.RandomMatchResponseDto;
 import com.example.jpa.domain.plan.dto.TravelPlanResponseDto;
 import com.example.jpa.domain.plan.entity.TravelPlan;
+import com.example.jpa.domain.plan.entity.TravelPlanStatus;
 import com.example.jpa.domain.plan.repository.TravelPlanRepository;
 import com.example.jpa.domain.ticket.dto.TicketDto;
 import com.example.jpa.domain.ticket.entity.Ticket;
@@ -115,7 +116,7 @@ public class RandomMatchService {
                 .durationDays(durationDays)
                 .peopleCount(request.getPeopleCount() != null ? request.getPeopleCount() : 1)
                 .totalPrice(estimatedTotal)
-                .status("READY")
+                .status(TravelPlanStatus.READY)
                 .build();
         travelPlanRepository.save(travelPlan);
 

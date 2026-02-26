@@ -32,7 +32,7 @@ public class UserResponseDto {
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .role(user.getRole())
-                .status(user.getStatus())
+                .status(user.getStatus() != null ? user.getStatus().name() : null)
                 .keywordPref(user.getKeywordPref())
                 .point(user.getPoint())
                 .createdAt(user.getCreatedAt())

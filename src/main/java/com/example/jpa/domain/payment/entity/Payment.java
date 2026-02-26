@@ -5,6 +5,8 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+import static jakarta.persistence.EnumType.STRING;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -38,7 +40,8 @@ public class Payment {
     private Integer totalAmount; // 결제 금액
 
     private String itemName; // 상품명
-    private String status; // 상태 (READY, COMPLETED, CANCELLED)
+    @Enumerated(STRING)
+    private PaymentStatus status;
     private String paymentMethod;
 
     private LocalDateTime createdAt;
@@ -48,7 +51,7 @@ public class Payment {
      * 결제 상태 및 키 업데이트 메서드
      * 아까 인텔리제이에서 빨간 줄이 떴던 부분입니다!
      */
-    public void updateStatus(String status, String paymentKey) {
+    public void updateStatus(PaymentStatus status, String paymentKey) {
         this.status = status;
         this.paymentKey = paymentKey;
         this.approvedAt = LocalDateTime.now();
@@ -57,7 +60,7 @@ public class Payment {
     /**
      * 새로 만든 3개짜리 메서드 (토스 승인 시 결제 수단 저장용)
      */
-    public void updateStatus(String status, String paymentKey, String paymentMethod) {
+    public void updateStatus(PaymentStatus status, String paymentKey, String paymentMethod) {
         this.status = status;
         this.paymentKey = paymentKey;
         this.paymentMethod = paymentMethod;

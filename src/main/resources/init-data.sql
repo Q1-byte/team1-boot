@@ -249,7 +249,7 @@ INSERT INTO activity (name, description, image_url, region_id, latitude, longitu
 -- 서울 (1)
 INSERT INTO ticket (name, description, image_url, region_id, latitude, longitude, price, category, keywords, available_from, available_to, is_active) VALUES
 ('국립중앙박물관 특별전', '한국 고대 문명 특별 기획전', 'https://loremflickr.com/400/300/national+museum+korea?lock=93', 1, 37.5239, 126.9806, 8000, 'MUSEUM', '전통/역사,체험,가성비', '2026-01-01', '2026-12-31', true),
-('COEX 아쿠아리움', '삼성동 코엑스 대형 아쿠아리움', 'https://loremflickr.com/400/300/coex+aquarium+seoul?lock=94', 1, 37.5115, 127.0590, 28000, 'THEMEPARK', '가족친화,체험', '2026-01-01', '2026-12-31', true),
+('COEX 아쿠아리움', '삼성동 코엑스 대형 아쿠아리움', 'https://loremflickr.com/400/300/coex+aquarium+seoul?lock=94', 1, 37.5115, 127.0590, 28000, 'THEMEPARK', '가족친화,체험,실내중심', '2026-01-01', '2026-12-31', true),
 ('뮤지컬 명성황후', '대학로 뮤지컬 공연 R석', 'https://loremflickr.com/400/300/musical+theater+korea?lock=95', 1, 37.5663, 126.9779, 66000, 'PERFORMANCE', '예술,데이트,전통/역사', '2026-03-01', '2026-08-31', true);
 
 -- 부산 (3)

@@ -44,7 +44,6 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 1. 배치를 실행하기 위해 이 경로를 최상단에 추가 (permitAll)
                         .requestMatchers("/admin/batch/**").permitAll()
-                        .requestMatchers("/api/gacha/**").permitAll()
 
                         // 2. 나머지 설정들
                         .requestMatchers("/api/**").permitAll()
@@ -53,7 +52,7 @@ public class SecurityConfig {
                         // 3. 실제 관리자 기능은 여기서 보호 (배치 제외)
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
-                        .anyRequest().permitAll()
+                        .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService))

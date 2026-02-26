@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
+import static jakarta.persistence.EnumType.STRING;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -63,9 +65,9 @@ public class TravelPlan {
     @Column(name = "total_price")
     private Integer totalPrice;
 
-    @Column(length = 20)
+    @Enumerated(STRING)
     @Builder.Default
-    private String status = "READY";
+    private TravelPlanStatus status = TravelPlanStatus.READY;
 
     @Column(name = "re_random_count")
     @Builder.Default
