@@ -12,8 +12,11 @@ import java.util.UUID;
 @Service
 public class FileService {
 
-    // 로컬 저장 경로 (C:/team1/uploads 처럼 실제 존재하는 경로 권장)
-    private final String uploadPath = "C:/tmp/project_uploads/";
+    @Value("${file.upload.path:/home/ubuntu/uploads/}")
+    private String uploadPath;
+
+    @Value("${server.url:http://localhost:8080}")
+    private String serverUrl;
 
     public FileResponseDto uploadFile(MultipartFile file) {
         if (file.isEmpty()) {
@@ -43,7 +46,7 @@ public class FileService {
         }
 
         // 프론트에서 접근 가능한 URL 반환 (WebConfig에서 /api/files/** 로 매핑 예정)
-        String storedUrl = "http://localhost:8080/api/files/" + storedName;
+        String storedUrl = serverUrl + "/api/files/" + storedName;
 
         return FileResponseDto.builder()
                 .originName(originName)

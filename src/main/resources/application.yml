@@ -57,3 +57,10 @@ toss:
 
 frontend:
   url: ${FRONTEND_URL:http://localhost:5173}
+
+server:
+  url: ${SERVER_URL:http://localhost:8080}
+
+file:
+  upload:
+    path: ${FILE_UPLOAD_PATH:/home/ubuntu/uploads/}
