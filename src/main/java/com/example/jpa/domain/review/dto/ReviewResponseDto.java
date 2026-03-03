@@ -32,6 +32,7 @@ public class ReviewResponseDto {
 
     // admin용 필드
     private Boolean isPublic;
+    private Boolean isHidden;
     private Boolean isDeleted;
 
 }
