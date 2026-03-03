@@ -42,6 +42,8 @@ public class Review {
     @Builder.Default
     private Boolean isPublic = true;
     @Builder.Default
+    private Boolean isHidden = false;  // 어드민 강제 숨김 (사용자 isPublic과 분리)
+    @Builder.Default
     private Boolean isDeleted = false;
     @Builder.Default
     private Integer viewCount = 0;

@@ -23,4 +23,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     // ReviewRepository.java 안에 추가
     Page<Review> findAllByIsDeletedFalseOrderByCreatedAtDesc(Pageable pageable);
+
+    // 숨김 처리 안 된 글만 조회 (isHidden = false, isDeleted = false)
+    Page<Review> findAllByIsDeletedFalseAndIsHiddenFalseOrderByCreatedAtDesc(Pageable pageable);
 }

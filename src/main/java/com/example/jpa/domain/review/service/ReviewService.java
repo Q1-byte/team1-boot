@@ -35,7 +35,7 @@ public class ReviewService {
      */
     public Page<ReviewResponseDto> getReviewList(Pageable pageable) {
         // 1. 삭제되지 않은 리뷰들을 페이징하여 가져옵니다.
-        Page<Review> reviews = reviewRepository.findAllByIsDeletedFalseOrderByCreatedAtDesc(pageable);
+        Page<Review> reviews = reviewRepository.findAllByIsDeletedFalseAndIsHiddenFalseOrderByCreatedAtDesc(pageable);
 
         // 2. 각 리뷰를 DTO로 변환하면서 썸네일을 찾습니다.
         return reviews.map(review -> {
@@ -55,6 +55,7 @@ public class ReviewService {
                     .thumbnailUrl(thumbnail) // [핵심] 썸네일 주입!
                     .rating(review.getRating()) // 👈 [추가] 이 줄이 여기에도 꼭 있어야 합니다!
                     .createdAt(review.getCreatedAt())
+                    .isPublic(review.getIsPublic())
                     .build();
         });
     }
@@ -144,6 +145,7 @@ public class ReviewService {
                 .viewCount(review.getViewCount())
                 .createdAt(review.getCreatedAt())
                 .updatedAt(review.getUpdatedAt())
+                .isPublic(review.getIsPublic())
                 .images(imageDtos)
                 .comments(commentTree)
                 .build();
@@ -237,6 +239,7 @@ public class ReviewService {
                     .rating(review.getRating())
                     .viewCount(review.getViewCount())
                     .isPublic(review.getIsPublic())
+                    .isHidden(review.getIsHidden())
                     .isDeleted(review.getIsDeleted())
                     .thumbnailUrl(thumbnail)
                     .createdAt(review.getCreatedAt())
@@ -252,7 +255,7 @@ public class ReviewService {
     public void toggleReviewVisibility(Long reviewId) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 리뷰가 존재하지 않습니다. ID: " + reviewId));
-        review.setIsPublic(!review.getIsPublic());
+        review.setIsHidden(!Boolean.TRUE.equals(review.getIsHidden()));
     }
 
     /**
