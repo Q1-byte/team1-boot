@@ -34,6 +34,9 @@ public class KakaoPayService {
     @Value("${kakao.admin-key}")
     private String KAKAO_ADMIN_KEY;
 
+    @Value("${frontend.url}")
+    private String FRONTEND_URL;
+
     /**
      * 결제 준비 (Ready)
      */
@@ -59,9 +62,9 @@ public class KakaoPayService {
         params.add("tax_free_amount", "0");
 
         // 프런트엔드 리다이렉트 경로 (tid를 쿼리 파라미터로 붙여주면 승인 시 찾기 편합니다)
-        params.add("approval_url", "http://localhost:5173/payment/kakao/success");
-        params.add("cancel_url", "http://localhost:5173/payment/cancel");
-        params.add("fail_url", "http://localhost:5173/payment/kakao/fail");
+        params.add("approval_url", FRONTEND_URL + "/payment/kakao/success");
+        params.add("cancel_url", FRONTEND_URL + "/payment/cancel");
+        params.add("fail_url", FRONTEND_URL + "/payment/kakao/fail");
 
         HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(params, headers);
 
