@@ -39,7 +39,7 @@ jobs:
 
           api:
             public-data:
-              service-key: "${{ secrets.PUBLIC_DATA_SERVICE_KEY }}"
+              service-key: ${{ secrets.PUBLIC_DATA_SERVICE_KEY }}
 
           kakao:
             admin-key: ${{ secrets.KAKAO_ADMIN_KEY }}
