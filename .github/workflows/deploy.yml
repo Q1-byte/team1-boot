@@ -48,6 +48,9 @@ jobs:
             secret-key: ${{ secrets.TOSS_SECRET_KEY }}
           EOF
 
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
       - name: Build with Gradle
         run: ./gradlew bootJar -x test
 
