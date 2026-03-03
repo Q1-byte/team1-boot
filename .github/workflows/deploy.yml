@@ -1,0 +1,82 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Create application-local.yml
+        run: |
+          mkdir -p src/main/resources
+          cat > src/main/resources/application-local.yml << EOF
+          spring:
+            security:
+              oauth2:
+                client:
+                  registration:
+                    google:
+                      client-id: ${{ secrets.GOOGLE_CLIENT_ID }}
+                      client-secret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+                    kakao:
+                      client-id: ${{ secrets.KAKAO_CLIENT_ID }}
+                      client-secret: ${{ secrets.KAKAO_CLIENT_SECRET }}
+            datasource:
+              username: ${{ secrets.DB_USERNAME }}
+              password: ${{ secrets.DB_PASSWORD }}
+
+          api:
+            public-data:
+              service-key: "${{ secrets.PUBLIC_DATA_SERVICE_KEY }}"
+
+          kakao:
+            admin-key: ${{ secrets.KAKAO_ADMIN_KEY }}
+
+          toss:
+            secret-key: ${{ secrets.TOSS_SECRET_KEY }}
+          EOF
+
+      - name: Build with Gradle
+        run: ./gradlew bootJar -x test
+
+      - name: Deploy to EC2
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          source: "build/libs/*.jar"
+          target: "/home/ubuntu/app"
+
+      - name: Run on EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            sudo fuser -k 8080/tcp || true
+            nohup java -jar /home/ubuntu/app/build/libs/*.jar \
+              --spring.profiles.active=local \
+              --GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} \
+              --GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }} \
+              --KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }} \
+              --KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }} \
+              --KAKAO_ADMIN_KEY=${{ secrets.KAKAO_ADMIN_KEY }} \
+              --TOSS_SECRET_KEY=${{ secrets.TOSS_SECRET_KEY }} \
+              --PUBLIC_DATA_SERVICE_KEY=${{ secrets.PUBLIC_DATA_SERVICE_KEY }} \
+              --DB_USERNAME=${{ secrets.DB_USERNAME }} \
+              --DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+              > /home/ubuntu/app/app.log 2>&1 &
