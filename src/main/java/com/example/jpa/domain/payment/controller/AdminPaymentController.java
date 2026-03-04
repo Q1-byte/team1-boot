@@ -8,6 +8,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/admin/payments")
 @RequiredArgsConstructor
@@ -27,6 +29,12 @@ public class AdminPaymentController {
     @GetMapping("/today-sales")
     public ResponseEntity<Long> getTodaySales() {
         return ResponseEntity.ok(paymentService.getTotalSalesToday());
+    }
+
+    // 누적 결제 통계
+    @GetMapping("/stats")
+    public ResponseEntity<Map<String, Long>> getStats() {
+        return ResponseEntity.ok(Map.of("totalCompletedAmount", paymentService.getTotalCompletedAmount()));
     }
 
     // 결제 강제 취소 (관리자 권한)

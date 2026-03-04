@@ -54,6 +54,11 @@ public class PaymentService {
         return 0L; // 우선 0으로 반환 (필요시 쿼리 추가)
     }
 
+    // COMPLETED 누적 총 결제 금액
+    public Long getTotalCompletedAmount() {
+        return paymentRepository.sumCompletedAmount();
+    }
+
     /**
      * 포인트 전액 결제 (POST /api/payment/point-only)
      * 외부 PG 없이 포인트만으로 결제 처리
