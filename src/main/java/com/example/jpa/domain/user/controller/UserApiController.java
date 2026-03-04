@@ -2,8 +2,10 @@ package com.example.jpa.domain.user.controller;
 
 import com.example.jpa.common.response.ApiResponse;
 import com.example.jpa.domain.user.dto.LoginRequestDto;
+import com.example.jpa.domain.user.dto.ResetPasswordRequestDto;
 import com.example.jpa.domain.user.dto.SignupRequestDto;
 import com.example.jpa.domain.user.dto.UserResponseDto;
+import com.example.jpa.domain.user.dto.VerifyUserRequestDto;
 import com.example.jpa.domain.user.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +57,34 @@ public class UserApiController {
         }
     }
     
+    /**
+     * 본인 확인 API (비밀번호 찾기용)
+     */
+    @PostMapping("/verify")
+    public ResponseEntity<ApiResponse<Void>> verifyUser(@RequestBody VerifyUserRequestDto requestDto) {
+        try {
+            userService.verifyUser(requestDto.getUsername(), requestDto.getEmail());
+            return ResponseEntity.ok(ApiResponse.success("본인 확인이 완료되었습니다."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.badRequest(e.getMessage()));
+        }
+    }
+
+    /**
+     * 비밀번호 재설정 API (비밀번호 찾기용)
+     */
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@RequestBody ResetPasswordRequestDto requestDto) {
+        try {
+            userService.resetPassword(requestDto.getUsername(), requestDto.getNewPassword());
+            return ResponseEntity.ok(ApiResponse.success("비밀번호가 변경되었습니다."));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.badRequest(e.getMessage()));
+        }
+    }
+
     /**
      * 아이디 중복 체크 API
      */

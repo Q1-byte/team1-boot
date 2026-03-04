@@ -135,6 +135,28 @@ public class UserService {
     }
     
     /**
+     * 본인 확인 (비밀번호 찾기용 - username + email 일치 여부)
+     */
+    public void verifyUser(String username, String email) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("아이디 또는 이메일이 일치하지 않습니다."));
+        if (!user.getEmail().equals(email)) {
+            throw new IllegalArgumentException("아이디 또는 이메일이 일치하지 않습니다.");
+        }
+    }
+
+    /**
+     * 비밀번호 재설정 (현재 비밀번호 없이 - 비밀번호 찾기용)
+     */
+    @Transactional
+    public void resetPassword(String username, String newPassword) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new NoSuchElementException("해당 회원이 존재하지 않습니다."));
+        user.setPassword(passwordEncoder.encode(newPassword));
+        log.info("비밀번호 재설정 완료: {}", user.getUsername());
+    }
+
+    /**
      * 비밀번호 변경
      */
     @Transactional
