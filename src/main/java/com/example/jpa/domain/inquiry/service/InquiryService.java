@@ -136,17 +136,12 @@ public class InquiryService {
         log.info("관리자 문의 삭제 - ID: {}", inquiryId);
     }
 
-    // 문의 통계 (전체 / 대기 / 답변완료)
+    // 문의 통계 (전체, 대기, 답변완료)
     public Map<String, Long> getInquiryStats() {
-        long total = inquiryRepository.countByIsDeletedFalse();
-        long waiting = inquiryRepository.countByStatusAndIsDeletedFalse(InquiryStatus.WAIT);
-        long answered = inquiryRepository.countByStatusAndIsDeletedFalse(InquiryStatus.ANSWERED);
-        return Map.of("total", total, "waiting", waiting, "answered", answered);
-    }
-
-    // 답변 대기 문의 수
-    public long getWaitingCount() {
-        return inquiryRepository.countByStatusAndIsDeletedFalse(InquiryStatus.WAIT);
+        return Map.of(
+                "total", inquiryRepository.countByIsDeletedFalse(),
+                "waiting", inquiryRepository.countByStatusAndIsDeletedFalse(InquiryStatus.WAIT),
+                "answered", inquiryRepository.countByStatusAndIsDeletedFalse(InquiryStatus.ANSWERED));
     }
 
     // 검색

@@ -72,17 +72,10 @@ public class AdminInquiryController {
         return ResponseEntity.ok(ApiResponse.success(Map.of("message", "삭제되었습니다.")));
     }
 
-    // 문의 통계 (전체/대기/답변완료)
+    // 전체 통계 조회
     @GetMapping("/stats")
     public ResponseEntity<ApiResponse<Map<String, Long>>> getStats() {
         return ResponseEntity.ok(ApiResponse.success(inquiryService.getInquiryStats()));
-    }
-
-    // 답변 대기 문의 수
-    @GetMapping("/waiting-count")
-    public ResponseEntity<ApiResponse<Long>> getWaitingCount() {
-        long count = inquiryService.getWaitingCount();
-        return ResponseEntity.ok(ApiResponse.success(count));
     }
 
     // 검색
