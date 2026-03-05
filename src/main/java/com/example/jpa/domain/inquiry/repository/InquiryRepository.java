@@ -33,6 +33,9 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
     // 사용자의 특정 문의 조회 (권한 체크용)
     Optional<Inquiry> findByIdAndWriterIdAndIsDeletedFalse(Long id, Long userId);
 
+    // 삭제되지 않은 전체 문의 수
+    long countByIsDeletedFalse();
+
     // 답변 대기 중인 문의 수 (관리자 대시보드용)
     long countByStatusAndIsDeletedFalse(InquiryStatus status);
 
