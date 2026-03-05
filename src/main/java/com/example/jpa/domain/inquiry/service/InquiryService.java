@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
@@ -133,6 +134,14 @@ public class InquiryService {
                 .orElseThrow(() -> new NoSuchElementException("문의를 찾을 수 없습니다."));
         inquiry.softDelete();
         log.info("관리자 문의 삭제 - ID: {}", inquiryId);
+    }
+
+    // 문의 통계 (전체 / 대기 / 답변완료)
+    public Map<String, Long> getInquiryStats() {
+        long total = inquiryRepository.countByIsDeletedFalse();
+        long waiting = inquiryRepository.countByStatusAndIsDeletedFalse(InquiryStatus.WAIT);
+        long answered = inquiryRepository.countByStatusAndIsDeletedFalse(InquiryStatus.ANSWERED);
+        return Map.of("total", total, "waiting", waiting, "answered", answered);
     }
 
     // 답변 대기 문의 수
