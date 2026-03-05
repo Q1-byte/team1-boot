@@ -47,11 +47,11 @@ public class PaymentService {
                 .build();
     }
 
-    // 오늘 총 매출액 계산 (Repository에 관련 메서드가 있다고 가정)
+    // 오늘 총 매출액 계산
     public Long getTotalSalesToday() {
-        // Repository에서 직접 sum 쿼리를 날리거나 로직 처리
-        // return paymentRepository.sumAmountByDate(LocalDate.now());
-        return 0L; // 우선 0으로 반환 (필요시 쿼리 추가)
+        LocalDateTime start = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime end = start.plusDays(1);
+        return paymentRepository.sumAmountByDate(start, end);
     }
 
     // COMPLETED 누적 총 결제 금액

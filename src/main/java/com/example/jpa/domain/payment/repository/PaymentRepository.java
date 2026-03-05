@@ -23,4 +23,10 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     // COMPLETED 상태 결제 누적 합계
     @Query("SELECT COALESCE(SUM(p.totalAmount), 0) FROM Payment p WHERE p.status = com.example.jpa.domain.payment.entity.PaymentStatus.COMPLETED")
     Long sumCompletedAmount();
+
+    // 특정 날짜 범위의 결제 합계 (오늘 매출용)
+    @Query("SELECT COALESCE(SUM(p.totalAmount), 0) FROM Payment p " +
+            "WHERE p.status = com.example.jpa.domain.payment.entity.PaymentStatus.COMPLETED " +
+            "AND p.approvedAt >= :start AND p.approvedAt < :end")
+    Long sumAmountByDate(@Param("start") java.time.LocalDateTime start, @Param("end") java.time.LocalDateTime end);
 }
